@@ -1,0 +1,68 @@
+name: GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build x64
+        run: >
+          dotnet publish Petapeta.csproj
+          -c Release -r win-x64 -p:Platform=x64 -p:EffectivePlatform=x64
+          -p:WindowsPackageType=None -p:SelfContained=true
+          -o publish/x64
+
+      - name: Build arm64
+        run: >
+          dotnet publish Petapeta.csproj
+          -c Release -r win-arm64 -p:Platform=arm64 -p:PlatformTarget=arm64 -p:EffectivePlatform=arm64
+          -p:WindowsPackageType=None -p:SelfContained=true
+          -o publish/arm64
+
+      - name: Create ZIP archives
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          Compress-Archive -Path publish/x64/*   -DestinationPath "Petapeta-$tag-win-x64.zip"
+          Compress-Archive -Path publish/arm64/* -DestinationPath "Petapeta-$tag-win-arm64.zip"
+
+      - name: Create or update GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.ref_name }}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" \
+              "Petapeta-${tag}-win-x64.zip" \
+              "Petapeta-${tag}-win-arm64.zip" \
+              --clobber
+          else
+            gh release create "$tag" \
+              "Petapeta-${tag}-win-x64.zip" \
+              "Petapeta-${tag}-win-arm64.zip" \
+              --title "$tag" \
+              --generate-notes
+          fi
+
+      - name: Publish to winget
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: daruyanagi.Petapeta
+          installers-regex: \.zip$
+          token: ${{ secrets.WINGET_TOKEN }}

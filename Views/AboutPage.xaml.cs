@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml.Controls;
-using Windows.ApplicationModel;
 
 namespace Petapeta.Views;
 
@@ -10,8 +9,9 @@ public sealed partial class AboutPage : Page
 
     public AboutPage()
     {
-        var v = Package.Current.Id.Version;
-        VersionText = R.F("AboutVersionFmt", $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}");
+        // パッケージ有無に依存しないよう、アセンブリのバージョンを表示する
+        var v = typeof(App).Assembly.GetName().Version;
+        VersionText = R.F("AboutVersionFmt", v is null ? "?" : $"{v.Major}.{v.Minor}.{v.Build}");
         InitializeComponent();
     }
 }

@@ -17,7 +17,7 @@ public partial class SettingsViewModel : ObservableObject
 
     public SettingsViewModel()
     {
-        StagingPath = System.IO.Path.Combine(ApplicationData.Current.LocalFolder.Path, "Staging");
+        StagingPath = AppPaths.StagingPath;
         _ = LoadStartupStateAsync();
     }
 
@@ -152,21 +152,28 @@ public partial class SettingsViewModel : ObservableObject
     private void CleanupNow() => _service.RunCleanup();
 
     [RelayCommand]
-    private async Task OpenStagingFolderAsync()
+    private void OpenStagingFolder()
     {
-        var folder = await ApplicationData.Current.LocalFolder
-            .CreateFolderAsync("Staging", CreationCollisionOption.OpenIfExists);
-        await Windows.System.Launcher.LaunchFolderAsync(folder);
+        System.Diagnostics.Process.Start("explorer.exe", AppPaths.EnsureStaging());
     }
 
     private async Task LoadStartupStateAsync()
     {
         try
         {
-            var task = await StartupTask.GetAsync(StartupTaskId);
-            _suppressStartupChange = true;
-            IsStartupEnabled = task.State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;
-            _suppressStartupChange = false;
+            if (PackageContext.IsPackaged)
+            {
+                var task = await StartupTask.GetAsync(StartupTaskId);
+                _suppressStartupChange = true;
+                IsStartupEnabled = task.State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;
+                _suppressStartupChange = false;
+            }
+            else
+            {
+                _suppressStartupChange = true;
+                IsStartupEnabled = StartupRegistration.IsEnabled();
+                _suppressStartupChange = false;
+            }
         }
         catch (Exception ex)
         {
@@ -178,6 +185,14 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
+            if (!PackageContext.IsPackaged)
+            {
+                // アンパッケージド(ZIP/winget)ではレジストリの Run キーを使う
+                StartupRegistration.SetEnabled(enable);
+                _service.Note(R.Get(enable ? "LogStartupOn" : "LogStartupOff"));
+                return;
+            }
+
             var task = await StartupTask.GetAsync(StartupTaskId);
             if (enable)
             {

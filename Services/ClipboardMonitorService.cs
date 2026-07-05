@@ -21,7 +21,6 @@ public sealed class ClipboardMonitorService
 {
     // 自分の書き換えを検出するためのマーカー形式(ループ防止)
     private const string MarkerFormat = "Petapeta.Processed";
-    private const string StagingFolderName = "Staging";
     private const int MaxRetries = 5;
     private const int RetryDelayMs = 100;
     private const ulong MaxImageBytes = 50 * 1024 * 1024;
@@ -61,7 +60,7 @@ public sealed class ClipboardMonitorService
     private string? _pendingText;
     private string? _pendingHtml;
     private string? _pendingRtf;
-    private StorageFile? _pendingFile;
+    private string? _pendingFilePath;
     private bool _textAugmented;
 
     public void Start()
@@ -207,7 +206,7 @@ public sealed class ClipboardMonitorService
         _pendingText = text;
         _pendingHtml = null;
         _pendingRtf = null;
-        _pendingFile = null;
+        _pendingFilePath = null;
         _textAugmented = false;
 
         if (view.Contains(StandardDataFormats.Html))
@@ -236,10 +235,9 @@ public sealed class ClipboardMonitorService
             return;
         }
 
-        var staging = await GetStagingFolderAsync();
-        var file = await staging.CreateFileAsync(
-            $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}.png", CreationCollisionOption.GenerateUniqueName);
-        await SavePngAsync(source, file);
+        var path = CreateUniqueStagingPath(".png");
+        await SavePngAsync(source, path);
+        var file = await StorageFile.GetFileFromPathAsync(path);
 
         var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
         package.SetBitmap(RandomAccessStreamReference.CreateFromFile(file));
@@ -281,18 +279,18 @@ public sealed class ClipboardMonitorService
             return;
         }
 
-        if (_pendingFile is null)
+        if (_pendingFilePath is null)
         {
-            var staging = await GetStagingFolderAsync();
-            _pendingFile = await staging.CreateFileAsync(
-                $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}.txt", CreationCollisionOption.GenerateUniqueName);
-            await FileIO.WriteTextAsync(_pendingFile, _pendingText);
+            var path = CreateUniqueStagingPath(".txt");
+            await File.WriteAllTextAsync(path, _pendingText);
+            _pendingFilePath = path;
         }
 
-        if (SetContentWithRetry(BuildTextPackage(includeFile: true), CreateOptions()))
+        var file = await StorageFile.GetFileFromPathAsync(_pendingFilePath);
+        if (SetContentWithRetry(BuildTextPackage(file), CreateOptions()))
         {
             _textAugmented = true;
-            Emit(R.F("LogFileAdded", _pendingFile.Name));
+            Emit(R.F("LogFileAdded", file.Name));
             SoundService.PlayFeedback();
             _ = Task.Run(CleanupStaging);
         }
@@ -319,7 +317,7 @@ public sealed class ClipboardMonitorService
             return Task.CompletedTask;
         }
 
-        if (SetContentWithRetry(BuildTextPackage(includeFile: false), CreateOptions()))
+        if (SetContentWithRetry(BuildTextPackage(file: null), CreateOptions()))
         {
             Emit(R.Get("LogHdropRemoved"));
         }
@@ -327,7 +325,7 @@ public sealed class ClipboardMonitorService
         return Task.CompletedTask;
     }
 
-    private DataPackage BuildTextPackage(bool includeFile)
+    private DataPackage BuildTextPackage(StorageFile? file)
     {
         var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
         package.SetText(_pendingText!);
@@ -339,9 +337,9 @@ public sealed class ClipboardMonitorService
         {
             package.SetRtf(_pendingRtf);
         }
-        if (includeFile && _pendingFile is not null)
+        if (file is not null)
         {
-            package.SetStorageItems(new[] { _pendingFile }, readOnly: false);
+            package.SetStorageItems(new[] { file }, readOnly: false);
         }
         package.SetData(MarkerFormat, "1");
         return package;
@@ -352,8 +350,21 @@ public sealed class ClipboardMonitorService
         _pendingText = null;
         _pendingHtml = null;
         _pendingRtf = null;
-        _pendingFile = null;
+        _pendingFilePath = null;
         _textAugmented = false;
+    }
+
+    /// <summary>ステージング内で重複しないファイルパスを作る。</summary>
+    private static string CreateUniqueStagingPath(string extension)
+    {
+        var dir = AppPaths.EnsureStaging();
+        var baseName = $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}";
+        var path = Path.Combine(dir, baseName + extension);
+        for (var i = 2; File.Exists(path); i++)
+        {
+            path = Path.Combine(dir, $"{baseName} ({i}){extension}");
+        }
+        return path;
     }
 
     // Win+V 履歴には元のコピーが既に載っているので、書き換え分は履歴に入れない
@@ -368,7 +379,7 @@ public sealed class ClipboardMonitorService
     {
         try
         {
-            var path = Path.Combine(ApplicationData.Current.LocalFolder.Path, StagingFolderName);
+            var path = AppPaths.StagingPath;
             if (!Directory.Exists(path))
             {
                 return;
@@ -408,17 +419,14 @@ public sealed class ClipboardMonitorService
         }
     }
 
-    private static async Task<StorageFolder> GetStagingFolderAsync() =>
-        await ApplicationData.Current.LocalFolder
-            .CreateFolderAsync(StagingFolderName, CreationCollisionOption.OpenIfExists);
-
-    private static async Task SavePngAsync(IRandomAccessStreamWithContentType source, StorageFile file)
+    private static async Task SavePngAsync(IRandomAccessStreamWithContentType source, string path)
     {
         var decoder = await BitmapDecoder.CreateAsync(source);
         using var bitmap = await decoder.GetSoftwareBitmapAsync(
             BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
 
-        using var dest = await file.OpenAsync(FileAccessMode.ReadWrite);
+        using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
+        using var dest = fileStream.AsRandomAccessStream();
         var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, dest);
         encoder.SetSoftwareBitmap(bitmap);
         await encoder.FlushAsync();

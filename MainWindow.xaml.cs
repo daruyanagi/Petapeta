@@ -30,7 +30,8 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
-        AppWindow.SetIcon("Assets/AppIcon.ico");
+        // アンパッケージド実行では作業ディレクトリが不定のため絶対パスで指定する
+        AppWindow.SetIcon(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"));
 
         // 初期ウィンドウサイズ 800x600(DPI に合わせて物理ピクセルへ換算)
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -157,14 +158,7 @@ public sealed partial class MainWindow : Window
 
     private void OnTrayStagingClick(object sender, RoutedEventArgs e)
     {
-        _ = OpenStagingFolderAsync();
-    }
-
-    private static async System.Threading.Tasks.Task OpenStagingFolderAsync()
-    {
-        var folder = await Windows.Storage.ApplicationData.Current.LocalFolder
-            .CreateFolderAsync("Staging", Windows.Storage.CreationCollisionOption.OpenIfExists);
-        await Windows.System.Launcher.LaunchFolderAsync(folder);
+        System.Diagnostics.Process.Start("explorer.exe", Services.AppPaths.EnsureStaging());
     }
 
     private void OnTrayExitClick(object sender, RoutedEventArgs e)
