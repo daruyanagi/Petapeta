@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Petapeta.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="24" Spacing="8" HorizontalAlignment="Left">
+
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <Image Source="ms-appx:///Assets/AppIcon.ico" Width="48" Height="48" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Petapeta" Style="{StaticResource TitleTextBlockStyle}" />
+                    <TextBlock
+                        Text="{x:Bind VersionText}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock x:Uid="AboutDescription" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+            <HyperlinkButton
+                Content="GitHub - daruyanagi"
+                NavigateUri="https://github.com/daruyanagi"
+                Padding="0,4" />
+
+            <TextBlock
+                x:Uid="AboutAcknowledgements"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                TextWrapping="Wrap"
+                Margin="0,16,0,0" />
+
+            <StackPanel Spacing="2">
+                <HyperlinkButton
+                    Content="H.NotifyIcon (MIT License)"
+                    NavigateUri="https://github.com/HavenDV/H.NotifyIcon"
+                    Padding="0,2" />
+                <HyperlinkButton
+                    Content="CommunityToolkit.Mvvm (MIT License)"
+                    NavigateUri="https://github.com/CommunityToolkit/dotnet"
+                    Padding="0,2" />
+                <HyperlinkButton
+                    Content="Windows Community Toolkit - SettingsControls (MIT License)"
+                    NavigateUri="https://github.com/CommunityToolkit/Windows"
+                    Padding="0,2" />
+                <HyperlinkButton
+                    Content="Windows App SDK (MIT License)"
+                    NavigateUri="https://github.com/microsoft/WindowsAppSDK"
+                    Padding="0,2" />
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Petapeta (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Petapeta (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

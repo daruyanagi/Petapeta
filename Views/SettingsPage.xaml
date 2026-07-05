@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Petapeta.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    mc:Ignorable="d">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="24" Spacing="8">
+
+            <TextBlock x:Uid="SettingsSectionStaging" Style="{StaticResource BodyStrongTextBlockStyle}" />
+            <controls:SettingsCard x:Uid="CardStaging" Description="{x:Bind ViewModel.StagingPath}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE838;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Button x:Uid="OpenStagingButton" Command="{x:Bind ViewModel.OpenStagingFolderCommand}" />
+            </controls:SettingsCard>
+
+            <TextBlock x:Uid="SettingsSectionTargets" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
+            <controls:SettingsCard x:Uid="CardImage" IsEnabled="{x:Bind ViewModel.IsMonitoringEnabled, Mode=OneWay}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xEB9F;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsImageEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="CardText" IsEnabled="{x:Bind ViewModel.IsMonitoringEnabled, Mode=OneWay}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE8C1;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsTextEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+            <TextBlock x:Uid="SettingsSectionCleanup" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
+            <controls:SettingsCard x:Uid="CardRetentionDays">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE787;" />
+                </controls:SettingsCard.HeaderIcon>
+                <NumberBox
+                    Value="{x:Bind ViewModel.RetentionDays, Mode=TwoWay}"
+                    Minimum="1"
+                    Maximum="365"
+                    SmallChange="1"
+                    SpinButtonPlacementMode="Inline" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="CardMaxFiles">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE8B7;" />
+                </controls:SettingsCard.HeaderIcon>
+                <NumberBox
+                    Value="{x:Bind ViewModel.MaxFiles, Mode=TwoWay}"
+                    Minimum="10"
+                    Maximum="10000"
+                    SmallChange="10"
+                    SpinButtonPlacementMode="Inline" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="CardCleanupNow">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE74D;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Button x:Uid="CleanupNowButton" Command="{x:Bind ViewModel.CleanupNowCommand}" />
+            </controls:SettingsCard>
+
+            <TextBlock x:Uid="SettingsSectionAppearance" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
+            <controls:SettingsCard x:Uid="CardTheme">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE790;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}" MinWidth="180">
+                    <ComboBoxItem x:Uid="ThemeSystem" />
+                    <ComboBoxItem x:Uid="ThemeLight" />
+                    <ComboBoxItem x:Uid="ThemeDark" />
+                </ComboBox>
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="CardLanguage">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xF2B7;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox SelectedIndex="{x:Bind ViewModel.LanguageIndex, Mode=TwoWay}" MinWidth="180">
+                    <ComboBoxItem x:Uid="LanguageSystem" />
+                    <ComboBoxItem Content="日本語" />
+                    <ComboBoxItem Content="English" />
+                </ComboBox>
+            </controls:SettingsCard>
+            <InfoBar
+                x:Uid="RestartInfoBar"
+                IsOpen="{x:Bind ViewModel.ShowRestartHint, Mode=OneWay}"
+                Severity="Informational"
+                IsClosable="False" />
+
+            <TextBlock x:Uid="SettingsSectionApp" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
+            <controls:SettingsExpander x:Uid="CardSound">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon Glyph="&#xE767;" />
+                </controls:SettingsExpander.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsSoundEnabled, Mode=TwoWay}" />
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard
+                        x:Uid="SoundPickerCard"
+                        IsEnabled="{x:Bind ViewModel.IsSoundEnabled, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ComboBox SelectedIndex="{x:Bind ViewModel.SoundIndex, Mode=TwoWay}" MinWidth="200">
+                                <ComboBoxItem x:Uid="SoundDefault" />
+                                <ComboBoxItem x:Uid="SoundIM" />
+                                <ComboBoxItem x:Uid="SoundMail" />
+                                <ComboBoxItem x:Uid="SoundReminder" />
+                                <ComboBoxItem x:Uid="SoundSMS" />
+                            </ComboBox>
+                            <Button x:Uid="SoundTestButton" Command="{x:Bind ViewModel.TestSoundCommand}" />
+                        </StackPanel>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+            <controls:SettingsCard x:Uid="CardStartup">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE7E8;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsStartupEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="CardStartMinimized">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE921;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsStartMinimizedEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

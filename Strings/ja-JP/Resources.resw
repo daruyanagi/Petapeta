@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ナビゲーション -->
+  <data name="NavLog.Content" xml:space="preserve"><value>ログ</value></data>
+  <data name="NavSettings.Content" xml:space="preserve"><value>設定</value></data>
+  <data name="NavAbout.Content" xml:space="preserve"><value>情報</value></data>
+  <data name="MonitorToolbarSwitch.OnContent" xml:space="preserve"><value>監視中</value></data>
+  <data name="MonitorToolbarSwitch.OffContent" xml:space="preserve"><value>停止中</value></data>
+
+  <!-- トレイメニュー -->
+  <data name="TrayOpen.Text" xml:space="preserve"><value>メインウィンドウを開く</value></data>
+  <data name="TrayStaging.Text" xml:space="preserve"><value>ステージングフォルダーを開く</value></data>
+  <data name="TrayMonitor.Text" xml:space="preserve"><value>クリップボード監視</value></data>
+  <data name="TrayExit.Text" xml:space="preserve"><value>終了</value></data>
+
+  <!-- ホーム -->
+  <data name="MonitorToggle.Header" xml:space="preserve"><value>クリップボード監視</value></data>
+  <data name="MonitorToggle.OnContent" xml:space="preserve"><value>有効</value></data>
+  <data name="MonitorToggle.OffContent" xml:space="preserve"><value>一時停止</value></data>
+  <data name="OpenStagingButtonLabel.Text" xml:space="preserve"><value>ステージングフォルダーを開く</value></data>
+
+  <!-- 設定 -->
+  <data name="SettingsSectionStaging.Text" xml:space="preserve"><value>ステージング</value></data>
+  <data name="CardStaging.Header" xml:space="preserve"><value>ステージングフォルダー</value></data>
+  <data name="OpenStagingButton.Content" xml:space="preserve"><value>開く</value></data>
+  <data name="SettingsSectionTargets.Text" xml:space="preserve"><value>対象</value></data>
+  <data name="CardImage.Header" xml:space="preserve"><value>画像をファイル化</value></data>
+  <data name="CardImage.Description" xml:space="preserve"><value>コピーされた画像を PNG として保存し、フォルダーへ貼り付けられるようにします</value></data>
+  <data name="CardText.Header" xml:space="preserve"><value>テキストをファイル化</value></data>
+  <data name="CardText.Description" xml:space="preserve"><value>コピーされたテキストを .txt として保存します。パスワードなどもファイルに残る点に注意</value></data>
+  <data name="SettingsSectionCleanup.Text" xml:space="preserve"><value>クリーンアップ</value></data>
+  <data name="CardRetentionDays.Header" xml:space="preserve"><value>保持日数</value></data>
+  <data name="CardRetentionDays.Description" xml:space="preserve"><value>この日数を過ぎたステージングファイルを自動削除します</value></data>
+  <data name="CardMaxFiles.Header" xml:space="preserve"><value>最大保持件数</value></data>
+  <data name="CardMaxFiles.Description" xml:space="preserve"><value>この件数を超えた古いファイルから自動削除します</value></data>
+  <data name="CardCleanupNow.Header" xml:space="preserve"><value>今すぐクリーンアップ</value></data>
+  <data name="CardCleanupNow.Description" xml:space="preserve"><value>条件を超えているファイルをその場で削除します</value></data>
+  <data name="CleanupNowButton.Content" xml:space="preserve"><value>実行</value></data>
+  <data name="SettingsSectionAppearance.Text" xml:space="preserve"><value>外観・言語</value></data>
+  <data name="CardTheme.Header" xml:space="preserve"><value>テーマ</value></data>
+  <data name="ThemeSystem.Content" xml:space="preserve"><value>システム設定に従う</value></data>
+  <data name="ThemeLight.Content" xml:space="preserve"><value>ライト</value></data>
+  <data name="ThemeDark.Content" xml:space="preserve"><value>ダーク</value></data>
+  <data name="CardLanguage.Header" xml:space="preserve"><value>言語</value></data>
+  <data name="LanguageSystem.Content" xml:space="preserve"><value>システム設定に従う</value></data>
+  <data name="RestartInfoBar.Title" xml:space="preserve"><value>再起動が必要です</value></data>
+  <data name="RestartInfoBar.Message" xml:space="preserve"><value>言語の変更はアプリを再起動すると反映されます。</value></data>
+  <data name="CardSound.Header" xml:space="preserve"><value>音で通知</value></data>
+  <data name="CardSound.Description" xml:space="preserve"><value>ファイル形式を追加したときにシステム音を鳴らします</value></data>
+  <data name="SoundPickerCard.Header" xml:space="preserve"><value>通知音</value></data>
+  <data name="SoundTestButton.Content" xml:space="preserve"><value>テスト再生</value></data>
+  <data name="SoundDefault.Content" xml:space="preserve"><value>既定</value></data>
+  <data name="SoundIM.Content" xml:space="preserve"><value>インスタント メッセージ</value></data>
+  <data name="SoundMail.Content" xml:space="preserve"><value>メール</value></data>
+  <data name="SoundReminder.Content" xml:space="preserve"><value>リマインダー</value></data>
+  <data name="SoundSMS.Content" xml:space="preserve"><value>SMS</value></data>
+  <data name="SettingsSectionApp.Text" xml:space="preserve"><value>アプリ</value></data>
+  <data name="CardStartup.Header" xml:space="preserve"><value>Windows 起動時に自動開始</value></data>
+  <data name="CardStartup.Description" xml:space="preserve"><value>サインイン時にウィンドウを表示せず、トレイ常駐で静かに開始します</value></data>
+  <data name="CardStartMinimized.Header" xml:space="preserve"><value>最小化状態で起動</value></data>
+  <data name="CardStartMinimized.Description" xml:space="preserve"><value>起動時にウィンドウを表示せず、トレイに常駐した状態で始めます</value></data>
+
+  <!-- 情報 -->
+  <data name="AboutDescription.Text" xml:space="preserve"><value>コピーした画像やテキストを、デスクトップやフォルダーへそのままペタペタ貼り付けられるようにする常駐ツールです。</value></data>
+  <data name="AboutAcknowledgements.Text" xml:space="preserve"><value>謝辞 — 本アプリは次のオープンソースコンポーネントを利用しています</value></data>
+  <data name="AboutVersionFmt" xml:space="preserve"><value>バージョン {0}</value></data>
+
+  <!-- ログメッセージ -->
+  <data name="LogMonitoringStarted" xml:space="preserve"><value>クリップボード監視を開始しました</value></data>
+  <data name="LogMonitorResumed" xml:space="preserve"><value>監視を再開しました</value></data>
+  <data name="LogMonitorPaused" xml:space="preserve"><value>監視を一時停止しました</value></data>
+  <data name="LogClipboardBusy" xml:space="preserve"><value>クリップボードを開けませんでした(他プロセスが使用中)</value></data>
+  <data name="LogFileCopyDetected" xml:space="preserve"><value>ファイルのコピーを検出: 処理不要</value></data>
+  <data name="LogImageTooLarge" xml:space="preserve"><value>画像が大きすぎるためスキップ({0} MB)</value></data>
+  <data name="LogTextTooLarge" xml:space="preserve"><value>テキストが大きすぎるためスキップ</value></data>
+  <data name="LogFileAdded" xml:space="preserve"><value>ファイル形式を追加: {0}</value></data>
+  <data name="LogSetContentFailed" xml:space="preserve"><value>クリップボードの再セットに失敗しました</value></data>
+  <data name="LogCleanupDeleted" xml:space="preserve"><value>古いファイルを {0} 件削除しました</value></data>
+  <data name="LogCleanupFailed" xml:space="preserve"><value>クリーンアップ失敗: {0}</value></data>
+  <data name="LogError" xml:space="preserve"><value>エラー: {0}</value></data>
+  <data name="LogImageOn" xml:space="preserve"><value>画像のファイル化: オン</value></data>
+  <data name="LogImageOff" xml:space="preserve"><value>画像のファイル化: オフ</value></data>
+  <data name="LogTextOn" xml:space="preserve"><value>テキストのファイル化: オン</value></data>
+  <data name="LogTextOff" xml:space="preserve"><value>テキストのファイル化: オフ</value></data>
+  <data name="LogStartupOn" xml:space="preserve"><value>Windows 起動時の自動開始: オン</value></data>
+  <data name="LogStartupOff" xml:space="preserve"><value>Windows 起動時の自動開始: オフ</value></data>
+  <data name="LogStartupDenied" xml:space="preserve"><value>自動起動を有効にできませんでした。設定 &gt; アプリ &gt; スタートアップから許可してください</value></data>
+  <data name="LogStartupQueryFailed" xml:space="preserve"><value>自動起動設定の取得に失敗: {0}</value></data>
+  <data name="LogStartupChangeFailed" xml:space="preserve"><value>自動起動設定の変更に失敗: {0}</value></data>
+</root>
