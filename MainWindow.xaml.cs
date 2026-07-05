@@ -54,9 +54,10 @@ public sealed partial class MainWindow : Window
         _initializingMonitorSwitch = true;
         MonitorSwitch.IsOn = App.Monitor.IsEnabled;
         _initializingMonitorSwitch = false;
+        TrayMonitorItem.IsChecked = App.Monitor.IsEnabled;
 
         // 監視状態はどのUI(ツールバー/トレイ)から変えても
-        // ここで一元的にツールバーへ反映する
+        // ここで一元的に両方のUIへ反映する
         App.Monitor.EnabledChanged += OnMonitorEnabledChanged;
 
         RootFrame.Navigate(typeof(LogPage));
@@ -64,8 +65,7 @@ public sealed partial class MainWindow : Window
 
     private void OnMonitorEnabledChanged(bool enabled)
     {
-        // トレイ(別スレッド)からの変更もあるため、ツールバーのある
-        // メインスレッドのキューへ確実に渡す
+        // ツールバー(メインスレッド)へ反映
         _dispatcherQueue.TryEnqueue(() =>
         {
             if (MonitorSwitch.IsOn != enabled)
@@ -73,6 +73,17 @@ public sealed partial class MainWindow : Window
                 _initializingMonitorSwitch = true;
                 MonitorSwitch.IsOn = enabled;
                 _initializingMonitorSwitch = false;
+            }
+        });
+
+        // トレイのチェックにも反映。SecondWindow モードでは項目が
+        // 別スレッドに属することがあるため、項目自身のキューを優先する
+        var trayQueue = TrayMonitorItem.DispatcherQueue ?? _dispatcherQueue;
+        trayQueue.TryEnqueue(() =>
+        {
+            if (TrayMonitorItem.IsChecked != enabled)
+            {
+                TrayMonitorItem.IsChecked = enabled;
             }
         });
     }
@@ -108,9 +119,16 @@ public sealed partial class MainWindow : Window
     }
 
     // トレイメニューが開くたびに、現在の監視状態をチェック表示へ反映する
+    // (常時同期の保険。スレッド跨ぎで失敗しても落とさない)
     private void OnTrayMenuOpening(object sender, object e)
     {
-        TrayMonitorItem.IsChecked = App.Monitor.IsEnabled;
+        try
+        {
+            TrayMonitorItem.IsChecked = App.Monitor.IsEnabled;
+        }
+        catch
+        {
+        }
     }
 
     private void OnTrayMonitorToggle(object sender, RoutedEventArgs e)
