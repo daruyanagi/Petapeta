@@ -40,7 +40,7 @@
   <data name="CardImage.Header" xml:space="preserve"><value>画像をファイル化</value></data>
   <data name="CardImage.Description" xml:space="preserve"><value>コピーされた画像を PNG として保存し、フォルダーへ貼り付けられるようにします</value></data>
   <data name="CardText.Header" xml:space="preserve"><value>テキストをファイル化</value></data>
-  <data name="CardText.Description" xml:space="preserve"><value>コピーされたテキストを .txt として保存します。パスワードなどもファイルに残る点に注意</value></data>
+  <data name="CardText.Description" xml:space="preserve"><value>エクスプローラーが前面の間だけ .txt として貼り付け可能にします。他のアプリへは通常どおりテキストで貼り付きます</value></data>
   <data name="SettingsSectionCleanup.Text" xml:space="preserve"><value>クリーンアップ</value></data>
   <data name="CardRetentionDays.Header" xml:space="preserve"><value>保持日数</value></data>
   <data name="CardRetentionDays.Description" xml:space="preserve"><value>この日数を過ぎたステージングファイルを自動削除します</value></data>
@@ -88,6 +88,7 @@
   <data name="LogTextTooLarge" xml:space="preserve"><value>テキストが大きすぎるためスキップ</value></data>
   <data name="LogFileAdded" xml:space="preserve"><value>ファイル形式を追加: {0}</value></data>
   <data name="LogSetContentFailed" xml:space="preserve"><value>クリップボードの再セットに失敗しました</value></data>
+  <data name="LogHdropRemoved" xml:space="preserve"><value>ファイル形式を解除しました(通常の貼り付けに戻ります)</value></data>
   <data name="LogCleanupDeleted" xml:space="preserve"><value>古いファイルを {0} 件削除しました</value></data>
   <data name="LogCleanupFailed" xml:space="preserve"><value>クリーンアップ失敗: {0}</value></data>
   <data name="LogError" xml:space="preserve"><value>エラー: {0}</value></data>

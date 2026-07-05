@@ -10,9 +10,12 @@ using Windows.Storage.Streams;
 namespace Petapeta.Services;
 
 /// <summary>
-/// クリップボードを監視し、画像・テキストがコピーされたとき
-/// 実体ファイルを書き出して CF_HDROP(StorageItems)を追加する。
-/// 元の形式(テキスト/HTML/RTF/ビットマップ)は可能な範囲で引き継ぐ。
+/// クリップボードを監視してファイル貼り付けを可能にする。
+///
+/// 画像: コピーされた時点で PNG を書き出し CF_HDROP(StorageItems)を追加する。
+/// テキスト: コピー時点では何もせず内容を保留し、エクスプローラーが最前面に
+/// なった瞬間に .txt 化して CF_HDROP を追加、他アプリへ切り替わったら解除する。
+/// (Web エディター等が HDROP を優先してテキスト貼り付けを乗っ取る問題の回避)
 /// </summary>
 public sealed class ClipboardMonitorService
 {
@@ -53,6 +56,14 @@ public sealed class ClipboardMonitorService
     private readonly List<string> _backlog = new();
     private bool _started;
 
+    // テキストの保留状態。ContentChanged とフォアグラウンド通知は
+    // どちらも UI スレッドで届くため、ロックは不要
+    private string? _pendingText;
+    private string? _pendingHtml;
+    private string? _pendingRtf;
+    private StorageFile? _pendingFile;
+    private bool _textAugmented;
+
     public void Start()
     {
         if (_started)
@@ -78,6 +89,39 @@ public sealed class ClipboardMonitorService
         lock (_logLock)
         {
             return _backlog.ToArray();
+        }
+    }
+
+    /// <summary>最前面がエクスプローラーかどうかの変化を受け取る(ForegroundWatcher から)。</summary>
+    public void OnExplorerForegroundChanged(bool isExplorer)
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        if (isExplorer)
+        {
+            if (TextEnabled && _pendingText is not null && !_textAugmented)
+            {
+                _ = RunSafeAsync(AugmentTextAsync);
+            }
+        }
+        else if (_textAugmented)
+        {
+            _ = RunSafeAsync(RestoreTextAsync);
+        }
+    }
+
+    private async Task RunSafeAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Emit(R.F("LogError", ex.Message));
         }
     }
 
@@ -129,6 +173,7 @@ public sealed class ClipboardMonitorService
 
         if (view.Contains(StandardDataFormats.StorageItems))
         {
+            ClearPendingText();
             Emit(R.Get("LogFileCopyDetected"));
             return;
         }
@@ -136,45 +181,68 @@ public sealed class ClipboardMonitorService
         var hasBitmap = view.Contains(StandardDataFormats.Bitmap) && ImageEnabled;
         var hasText = view.Contains(StandardDataFormats.Text) && TextEnabled;
 
-        if (!hasBitmap && !hasText)
+        if (hasBitmap)
         {
+            ClearPendingText();
+            await AugmentImageAsync(view);
+            return;
+        }
+
+        if (!hasText)
+        {
+            ClearPendingText();
+            return;
+        }
+
+        var text = await view.GetTextAsync();
+        if (text.Length > MaxTextChars)
+        {
+            ClearPendingText();
+            Emit(R.Get("LogTextTooLarge"));
+            return;
+        }
+
+        // ここではクリップボードを書き換えず保留のみ。エクスプローラーが
+        // 前面になったとき(または既に前面のとき)にファイル化する
+        _pendingText = text;
+        _pendingHtml = null;
+        _pendingRtf = null;
+        _pendingFile = null;
+        _textAugmented = false;
+
+        if (view.Contains(StandardDataFormats.Html))
+        {
+            try { _pendingHtml = await view.GetHtmlFormatAsync(); } catch { }
+        }
+        if (view.Contains(StandardDataFormats.Rtf))
+        {
+            try { _pendingRtf = await view.GetRtfAsync(); } catch { }
+        }
+
+        if (ForegroundWatcher.IsExplorerForeground())
+        {
+            await AugmentTextAsync();
+        }
+    }
+
+    /// <summary>画像を PNG として書き出し、CF_HDROP を追加して再セットする。</summary>
+    private async Task AugmentImageAsync(DataPackageView view)
+    {
+        var reference = await view.GetBitmapAsync();
+        using var source = await reference.OpenReadAsync();
+        if (source.Size > MaxImageBytes)
+        {
+            Emit(R.F("LogImageTooLarge", source.Size / 1024 / 1024));
             return;
         }
 
         var staging = await GetStagingFolderAsync();
-        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HHmmss");
+        var file = await staging.CreateFileAsync(
+            $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}.png", CreationCollisionOption.GenerateUniqueName);
+        await SavePngAsync(source, file);
 
         var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
-        StorageFile file;
-
-        if (hasBitmap)
-        {
-            var reference = await view.GetBitmapAsync();
-            using var source = await reference.OpenReadAsync();
-            if (source.Size > MaxImageBytes)
-            {
-                Emit(R.F("LogImageTooLarge", source.Size / 1024 / 1024));
-                return;
-            }
-
-            file = await staging.CreateFileAsync(
-                $"Clipboard {timestamp}.png", CreationCollisionOption.GenerateUniqueName);
-            await SavePngAsync(source, file);
-            package.SetBitmap(RandomAccessStreamReference.CreateFromFile(file));
-        }
-        else
-        {
-            var text = await view.GetTextAsync();
-            if (text.Length > MaxTextChars)
-            {
-                Emit(R.Get("LogTextTooLarge"));
-                return;
-            }
-
-            file = await staging.CreateFileAsync(
-                $"Clipboard {timestamp}.txt", CreationCollisionOption.GenerateUniqueName);
-            await FileIO.WriteTextAsync(file, text);
-        }
+        package.SetBitmap(RandomAccessStreamReference.CreateFromFile(file));
 
         // 元の形式を可能な範囲で引き継ぐ(取得に失敗した形式は諦める)
         if (view.Contains(StandardDataFormats.Text))
@@ -193,14 +261,7 @@ public sealed class ClipboardMonitorService
         package.SetStorageItems(new[] { file }, readOnly: false);
         package.SetData(MarkerFormat, "1");
 
-        // Win+V 履歴には元のコピーが既に載っているので、書き換え分は履歴に入れない
-        var options = new ClipboardContentOptions
-        {
-            IsAllowedInHistory = false,
-            IsRoamable = false,
-        };
-
-        if (SetContentWithRetry(package, options))
+        if (SetContentWithRetry(package, CreateOptions()))
         {
             Emit(R.F("LogFileAdded", file.Name));
             SoundService.PlayFeedback();
@@ -211,6 +272,96 @@ public sealed class ClipboardMonitorService
             Emit(R.Get("LogSetContentFailed"));
         }
     }
+
+    /// <summary>保留中のテキストを .txt 化し、CF_HDROP 付きで再セットする。</summary>
+    private async Task AugmentTextAsync()
+    {
+        if (_pendingText is null)
+        {
+            return;
+        }
+
+        if (_pendingFile is null)
+        {
+            var staging = await GetStagingFolderAsync();
+            _pendingFile = await staging.CreateFileAsync(
+                $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}.txt", CreationCollisionOption.GenerateUniqueName);
+            await FileIO.WriteTextAsync(_pendingFile, _pendingText);
+        }
+
+        if (SetContentWithRetry(BuildTextPackage(includeFile: true), CreateOptions()))
+        {
+            _textAugmented = true;
+            Emit(R.F("LogFileAdded", _pendingFile.Name));
+            SoundService.PlayFeedback();
+            _ = Task.Run(CleanupStaging);
+        }
+        else
+        {
+            Emit(R.Get("LogSetContentFailed"));
+        }
+    }
+
+    /// <summary>CF_HDROP を外し、テキストのみのクリップボードへ戻す。</summary>
+    private Task RestoreTextAsync()
+    {
+        _textAugmented = false;
+
+        if (_pendingText is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        // 他のアプリが既にクリップボードを書き換えていたら触らない
+        var view = GetContentWithRetry();
+        if (view is null || !view.Contains(MarkerFormat) || !view.Contains(StandardDataFormats.StorageItems))
+        {
+            return Task.CompletedTask;
+        }
+
+        if (SetContentWithRetry(BuildTextPackage(includeFile: false), CreateOptions()))
+        {
+            Emit(R.Get("LogHdropRemoved"));
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private DataPackage BuildTextPackage(bool includeFile)
+    {
+        var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
+        package.SetText(_pendingText!);
+        if (_pendingHtml is not null)
+        {
+            package.SetHtmlFormat(_pendingHtml);
+        }
+        if (_pendingRtf is not null)
+        {
+            package.SetRtf(_pendingRtf);
+        }
+        if (includeFile && _pendingFile is not null)
+        {
+            package.SetStorageItems(new[] { _pendingFile }, readOnly: false);
+        }
+        package.SetData(MarkerFormat, "1");
+        return package;
+    }
+
+    private void ClearPendingText()
+    {
+        _pendingText = null;
+        _pendingHtml = null;
+        _pendingRtf = null;
+        _pendingFile = null;
+        _textAugmented = false;
+    }
+
+    // Win+V 履歴には元のコピーが既に載っているので、書き換え分は履歴に入れない
+    private static ClipboardContentOptions CreateOptions() => new()
+    {
+        IsAllowedInHistory = false,
+        IsRoamable = false,
+    };
 
     /// <summary>保持期間・件数を超えた古いステージングファイルを削除する。</summary>
     private void CleanupStaging()

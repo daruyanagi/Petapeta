@@ -39,6 +39,9 @@ public partial class App : Application
     /// </summary>
     public static ClipboardMonitorService Monitor { get; } = new();
 
+    /// <summary>最前面ウィンドウの監視(テキストのオンデマンドファイル化用)。</summary>
+    public static ForegroundWatcher Foreground { get; } = new();
+
     /// <summary>
     /// Initializes the singleton application object.
     /// </summary>
@@ -77,6 +80,8 @@ public partial class App : Application
         DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         ApplyTheme(Services.SettingsService.Theme);
         Monitor.Start();
+        Foreground.ExplorerForegroundChanged += Monitor.OnExplorerForegroundChanged;
+        Foreground.Start();
 
         // スタートアップ(自動起動)または「最小化で起動」設定のときは
         // ウィンドウを出さずトレイのみで開始する

@@ -40,7 +40,7 @@
   <data name="CardImage.Header" xml:space="preserve"><value>Turn images into files</value></data>
   <data name="CardImage.Description" xml:space="preserve"><value>Saves copied images as PNG so you can paste them into any folder</value></data>
   <data name="CardText.Header" xml:space="preserve"><value>Turn text into files</value></data>
-  <data name="CardText.Description" xml:space="preserve"><value>Saves copied text as .txt. Note that passwords will also be written to disk</value></data>
+  <data name="CardText.Description" xml:space="preserve"><value>Makes text pastable as a .txt file only while File Explorer is in the foreground. Other apps receive plain text as usual</value></data>
   <data name="SettingsSectionCleanup.Text" xml:space="preserve"><value>Cleanup</value></data>
   <data name="CardRetentionDays.Header" xml:space="preserve"><value>Days to keep files</value></data>
   <data name="CardRetentionDays.Description" xml:space="preserve"><value>Staging files older than this are deleted automatically</value></data>
@@ -88,6 +88,7 @@
   <data name="LogTextTooLarge" xml:space="preserve"><value>Text too large, skipped</value></data>
   <data name="LogFileAdded" xml:space="preserve"><value>File added to clipboard: {0}</value></data>
   <data name="LogSetContentFailed" xml:space="preserve"><value>Failed to update the clipboard</value></data>
+  <data name="LogHdropRemoved" xml:space="preserve"><value>File format removed (back to normal paste)</value></data>
   <data name="LogCleanupDeleted" xml:space="preserve"><value>Deleted {0} old file(s)</value></data>
   <data name="LogCleanupFailed" xml:space="preserve"><value>Cleanup failed: {0}</value></data>
   <data name="LogError" xml:space="preserve"><value>Error: {0}</value></data>
