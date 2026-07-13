@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Petapeta.Services;
@@ -85,8 +86,9 @@ public partial class App : Application
 
         // スタートアップ(自動起動)または「最小化で起動」設定のときは
         // ウィンドウを出さずトレイのみで開始する
-        var startHidden = activationArgs.Kind == ExtendedActivationKind.StartupTask
-            || Services.SettingsService.StartMinimized;
+        var launchedAtStartup = Environment.GetCommandLineArgs()
+            .Contains(Services.StartupRegistration.StartupArgument, StringComparer.OrdinalIgnoreCase);
+        var startHidden = launchedAtStartup || Services.SettingsService.StartMinimized;
         if (!startHidden)
         {
             Window.Activate();

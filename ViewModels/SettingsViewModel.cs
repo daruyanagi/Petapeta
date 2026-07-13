@@ -3,15 +3,11 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Petapeta.Services;
-using Windows.ApplicationModel;
-using Windows.Storage;
 
 namespace Petapeta.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
-    private const string StartupTaskId = "PetapetaStartup";
-
     private readonly ClipboardMonitorService _service = App.Monitor;
     private bool _suppressStartupChange;
 
@@ -157,67 +153,33 @@ public partial class SettingsViewModel : ObservableObject
         System.Diagnostics.Process.Start("explorer.exe", AppPaths.EnsureStaging());
     }
 
-    private async Task LoadStartupStateAsync()
+    private Task LoadStartupStateAsync()
     {
         try
         {
-            if (PackageContext.IsPackaged)
-            {
-                var task = await StartupTask.GetAsync(StartupTaskId);
-                _suppressStartupChange = true;
-                IsStartupEnabled = task.State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;
-                _suppressStartupChange = false;
-            }
-            else
-            {
-                _suppressStartupChange = true;
-                IsStartupEnabled = StartupRegistration.IsEnabled();
-                _suppressStartupChange = false;
-            }
+            _suppressStartupChange = true;
+            IsStartupEnabled = StartupRegistration.IsEnabled();
+            _suppressStartupChange = false;
         }
         catch (Exception ex)
         {
             _service.Note(R.F("LogStartupQueryFailed", ex.Message));
         }
+        return Task.CompletedTask;
     }
 
-    private async Task ApplyStartupAsync(bool enable)
+    private Task ApplyStartupAsync(bool enable)
     {
         try
         {
-            if (!PackageContext.IsPackaged)
-            {
-                // アンパッケージド(ZIP/winget)ではレジストリの Run キーを使う
-                StartupRegistration.SetEnabled(enable);
-                _service.Note(R.Get(enable ? "LogStartupOn" : "LogStartupOff"));
-                return;
-            }
-
-            var task = await StartupTask.GetAsync(StartupTaskId);
-            if (enable)
-            {
-                var state = await task.RequestEnableAsync();
-                if (state is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy)
-                {
-                    _service.Note(R.Get("LogStartupOn"));
-                }
-                else
-                {
-                    _service.Note(R.Get("LogStartupDenied"));
-                    _suppressStartupChange = true;
-                    IsStartupEnabled = false;
-                    _suppressStartupChange = false;
-                }
-            }
-            else
-            {
-                task.Disable();
-                _service.Note(R.Get("LogStartupOff"));
-            }
+            // shell:startup へのショートカットで管理(パッケージ有無を問わず共通。#1)
+            StartupRegistration.SetEnabled(enable);
+            _service.Note(R.Get(enable ? "LogStartupOn" : "LogStartupOff"));
         }
         catch (Exception ex)
         {
             _service.Note(R.F("LogStartupChangeFailed", ex.Message));
         }
+        return Task.CompletedTask;
     }
 }
