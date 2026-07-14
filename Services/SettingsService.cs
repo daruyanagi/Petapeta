@@ -21,6 +21,7 @@ public static class SettingsService
         public string Language { get; set; } = "";
         public bool SoundEnabled { get; set; } = true;
         public string SoundEvent { get; set; } = "Notification.Default";
+        public bool LogToFile { get; set; } = true;
     }
 
     private static readonly object Gate = new();
@@ -83,6 +84,13 @@ public static class SettingsService
     {
         get => Values.SoundEvent;
         set { Values.SoundEvent = value; Save(); }
+    }
+
+    /// <summary>ログをファイル(Logs フォルダー)にも保存するか。</summary>
+    public static bool LogToFile
+    {
+        get => Values.LogToFile;
+        set { Values.LogToFile = value; Save(); }
     }
 
     private static Model Load()

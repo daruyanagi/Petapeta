@@ -27,6 +27,11 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool IsStartMinimizedEnabled { get; set; } = SettingsService.StartMinimized;
 
     [ObservableProperty]
+    public partial bool IsLogToFileEnabled { get; set; } = SettingsService.LogToFile;
+
+    public string LogsPath => AppPaths.LogsPath;
+
+    [ObservableProperty]
     public partial bool IsImageEnabled { get; set; } = SettingsService.ImageEnabled;
 
     [ObservableProperty]
@@ -142,6 +147,18 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnIsStartMinimizedEnabledChanged(bool value)
     {
         SettingsService.StartMinimized = value;
+    }
+
+    partial void OnIsLogToFileEnabledChanged(bool value)
+    {
+        SettingsService.LogToFile = value;
+    }
+
+    [RelayCommand]
+    private void OpenLogFolder()
+    {
+        System.IO.Directory.CreateDirectory(AppPaths.LogsPath);
+        System.Diagnostics.Process.Start("explorer.exe", AppPaths.LogsPath);
     }
 
     [RelayCommand]

@@ -19,6 +19,8 @@ public static class AppPaths
 
     public static string SettingsPath { get; } = Path.Combine(DataRoot, "settings.json");
 
+    public static string LogsPath { get; } = Path.Combine(DataRoot, "Logs");
+
     /// <summary>ステージングフォルダーを(なければ作って)返す。</summary>
     public static string EnsureStaging()
     {

@@ -144,6 +144,7 @@ public sealed class ClipboardMonitorService
                 _backlog.RemoveAt(0);
             }
         }
+        LogFileService.Append(line);
         Log?.Invoke(line);
     }
 
