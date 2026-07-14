@@ -120,9 +120,18 @@ public sealed class ClipboardMonitorService
         }
         catch (Exception ex)
         {
-            Emit(R.F("LogError", ex.Message));
+            Emit(R.F("LogError", Describe(ex)));
         }
     }
+
+    /// <summary>
+    /// 例外の型と HRESULT を含む診断文字列。COM/WinRT 例外は Message が
+    /// 空のことがあり「エラー: 」だけでは調査不能なため(#03:49:52 問題)。
+    /// </summary>
+    private static string Describe(Exception ex) =>
+        string.IsNullOrWhiteSpace(ex.Message)
+            ? $"{ex.GetType().Name} (0x{ex.HResult:X8})"
+            : $"{ex.Message} — {ex.GetType().Name} (0x{ex.HResult:X8})";
 
     private void Emit(string message)
     {
@@ -151,7 +160,7 @@ public sealed class ClipboardMonitorService
         }
         catch (Exception ex)
         {
-            Emit(R.F("LogError", ex.Message));
+            Emit(R.F("LogError", Describe(ex)));
         }
     }
 
