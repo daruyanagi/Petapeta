@@ -14,7 +14,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DefaultLanguage>ja-JP</DefaultLanguage>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <!-- アンパッケージド(ZIP/winget)配布用: .NET と Windows App SDK を自己完結にする -->
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
