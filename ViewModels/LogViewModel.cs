@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
 using Petapeta.Services;
 
@@ -40,5 +41,12 @@ public partial class LogViewModel : ObservableObject
         {
             Logs.RemoveAt(Logs.Count - 1);
         }
+    }
+
+    [RelayCommand]
+    private void OpenLogFolder()
+    {
+        System.IO.Directory.CreateDirectory(AppPaths.LogsPath);
+        System.Diagnostics.Process.Start("explorer.exe", AppPaths.LogsPath);
     }
 }

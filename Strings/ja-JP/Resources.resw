@@ -76,6 +76,7 @@
   <data name="CardLogToFile.Description" xml:space="preserve"><value>アプリを開かなくても後からログを確認できるようにします(保持日数で自動削除)</value></data>
   <data name="LogFolderCard.Header" xml:space="preserve"><value>ログフォルダー</value></data>
   <data name="LogFolderOpenButton.Content" xml:space="preserve"><value>開く</value></data>
+  <data name="OpenLogFolderButtonLabel.Text" xml:space="preserve"><value>ログフォルダーを開く</value></data>
 
   <!-- 情報 -->
   <data name="AboutDescription.Text" xml:space="preserve"><value>コピーした画像やテキストを、デスクトップやフォルダーへそのままペタペタ貼り付けられるようにする常駐ツールです。</value></data>
