@@ -61,6 +61,7 @@ public sealed class ClipboardMonitorService
     private string? _pendingHtml;
     private string? _pendingRtf;
     private string? _pendingFilePath;
+    private string? _pendingSourceApp;
     private bool _textAugmented;
 
     public void Start()
@@ -190,10 +191,13 @@ public sealed class ClipboardMonitorService
         var hasBitmap = view.Contains(StandardDataFormats.Bitmap) && ImageEnabled;
         var hasText = view.Contains(StandardDataFormats.Text) && TextEnabled;
 
+        // コピー元の特定は自分で再セットする前に行う(再セット後は所有者が自分になる)
+        var sourceApp = GetClipboardOwnerProcessName();
+
         if (hasBitmap)
         {
             ClearPendingText();
-            await AugmentImageAsync(view);
+            await AugmentImageAsync(view, sourceApp);
             return;
         }
 
@@ -217,6 +221,7 @@ public sealed class ClipboardMonitorService
         _pendingHtml = null;
         _pendingRtf = null;
         _pendingFilePath = null;
+        _pendingSourceApp = sourceApp;
         _textAugmented = false;
 
         if (view.Contains(StandardDataFormats.Html))
@@ -235,7 +240,7 @@ public sealed class ClipboardMonitorService
     }
 
     /// <summary>画像を PNG として書き出し、CF_HDROP を追加して再セットする。</summary>
-    private async Task AugmentImageAsync(DataPackageView view)
+    private async Task AugmentImageAsync(DataPackageView view, string? sourceApp)
     {
         var reference = await view.GetBitmapAsync();
         using var source = await reference.OpenReadAsync();
@@ -271,7 +276,7 @@ public sealed class ClipboardMonitorService
 
         if (SetContentWithRetry(package, CreateOptions()))
         {
-            Emit(R.F("LogFileAdded", file.Name));
+            Emit(FormatFileAdded(file.Name, sourceApp));
             SoundService.PlayFeedback();
             _ = Task.Run(CleanupStaging);
         }
@@ -300,7 +305,7 @@ public sealed class ClipboardMonitorService
         if (SetContentWithRetry(BuildTextPackage(file), CreateOptions()))
         {
             _textAugmented = true;
-            Emit(R.F("LogFileAdded", file.Name));
+            Emit(FormatFileAdded(file.Name, _pendingSourceApp));
             SoundService.PlayFeedback();
             _ = Task.Run(CleanupStaging);
         }
@@ -361,8 +366,47 @@ public sealed class ClipboardMonitorService
         _pendingHtml = null;
         _pendingRtf = null;
         _pendingFilePath = null;
+        _pendingSourceApp = null;
         _textAugmented = false;
     }
+
+    private static string FormatFileAdded(string fileName, string? sourceApp) =>
+        string.IsNullOrEmpty(sourceApp)
+            ? R.F("LogFileAdded", fileName)
+            : R.F("LogFileAddedFrom", fileName, sourceApp);
+
+    /// <summary>
+    /// クリップボード所有者(コピー元アプリ)のプロセス名。取得できなければ null。
+    /// 内容は書かずアプリ名だけをログに残す。
+    /// </summary>
+    private static string? GetClipboardOwnerProcessName()
+    {
+        try
+        {
+            var hwnd = GetClipboardOwner();
+            if (hwnd == 0)
+            {
+                return null;
+            }
+            _ = GetWindowThreadProcessId(hwnd, out var pid);
+            if (pid == 0)
+            {
+                return null;
+            }
+            using var process = System.Diagnostics.Process.GetProcessById((int)pid);
+            return process.ProcessName;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern nint GetClipboardOwner();
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(nint hwnd, out uint pid);
 
     /// <summary>ステージング内で重複しないファイルパスを作る。</summary>
     private static string CreateUniqueStagingPath(string extension)

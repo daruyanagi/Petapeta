@@ -92,6 +92,7 @@
   <data name="LogImageTooLarge" xml:space="preserve"><value>Image too large, skipped ({0} MB)</value></data>
   <data name="LogTextTooLarge" xml:space="preserve"><value>Text too large, skipped</value></data>
   <data name="LogFileAdded" xml:space="preserve"><value>File added to clipboard: {0}</value></data>
+  <data name="LogFileAddedFrom" xml:space="preserve"><value>File added to clipboard: {0} (source: {1})</value></data>
   <data name="LogSetContentFailed" xml:space="preserve"><value>Failed to update the clipboard</value></data>
   <data name="LogHdropRemoved" xml:space="preserve"><value>File format removed (back to normal paste)</value></data>
   <data name="LogCleanupDeleted" xml:space="preserve"><value>Deleted {0} old file(s)</value></data>

@@ -92,6 +92,7 @@
   <data name="LogImageTooLarge" xml:space="preserve"><value>画像が大きすぎるためスキップ({0} MB)</value></data>
   <data name="LogTextTooLarge" xml:space="preserve"><value>テキストが大きすぎるためスキップ</value></data>
   <data name="LogFileAdded" xml:space="preserve"><value>ファイル形式を追加: {0}</value></data>
+  <data name="LogFileAddedFrom" xml:space="preserve"><value>ファイル形式を追加: {0}(コピー元: {1})</value></data>
   <data name="LogSetContentFailed" xml:space="preserve"><value>クリップボードの再セットに失敗しました</value></data>
   <data name="LogHdropRemoved" xml:space="preserve"><value>ファイル形式を解除しました(通常の貼り付けに戻ります)</value></data>
   <data name="LogCleanupDeleted" xml:space="preserve"><value>古いファイルを {0} 件削除しました</value></data>
