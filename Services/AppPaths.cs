@@ -27,4 +27,19 @@ public static class AppPaths
         Directory.CreateDirectory(StagingPath);
         return StagingPath;
     }
+
+    /// <summary>
+    /// フォルダーをエクスプローラーで開く。"explorer.exe" の PATH 解決に
+    /// 依存しないよう ShellExecute でフォルダーパスを直接開く(#6:
+    /// PATH が壊れた環境で Win32Exception → クラッシュしていた)。
+    /// </summary>
+    public static void OpenFolder(string path)
+    {
+        Directory.CreateDirectory(path);
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = path,
+            UseShellExecute = true,
+        });
+    }
 }

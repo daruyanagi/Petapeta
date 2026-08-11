@@ -56,6 +56,18 @@ public partial class App : Application
         }
 
         InitializeComponent();
+
+        // クラッシュ原因の調査用に、未処理例外を Logs\crash-*.log へ記録する(#6)。
+        // 0xc000027b(Stowed Exception)対策として3系統すべてを張る
+        UnhandledException += (_, e) =>
+            Services.LogFileService.WriteCrash("Xaml.Application.UnhandledException", e.Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            Services.LogFileService.WriteCrash("AppDomain.UnhandledException", e.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Services.LogFileService.WriteCrash("TaskScheduler.UnobservedTaskException", e.Exception);
+            e.SetObserved();
+        };
     }
 
     /// <summary>

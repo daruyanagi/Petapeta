@@ -40,6 +40,27 @@ public static class LogFileService
         }
     }
 
+    /// <summary>
+    /// クラッシュ情報を専用ファイルに書き出す(#6)。診断目的のため
+    /// LogToFile 設定に関係なく常に保存する。
+    /// </summary>
+    public static void WriteCrash(string origin, Exception? ex)
+    {
+        try
+        {
+            Directory.CreateDirectory(AppPaths.LogsPath);
+            var path = Path.Combine(AppPaths.LogsPath, $"crash-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+            File.WriteAllText(path,
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {origin}\r\n" +
+                $"HResult: 0x{ex?.HResult:X8}\r\n" +
+                $"{ex}\r\n");
+        }
+        catch
+        {
+            // クラッシュログの保存失敗は何もできないため無視
+        }
+    }
+
     /// <summary>保持日数(ステージングと同じ設定値)を過ぎたログを削除する。</summary>
     private static void Cleanup()
     {

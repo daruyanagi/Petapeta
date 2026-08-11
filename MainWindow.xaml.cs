@@ -158,7 +158,15 @@ public sealed partial class MainWindow : Window
 
     private void OnTrayStagingClick(object sender, RoutedEventArgs e)
     {
-        System.Diagnostics.Process.Start("explorer.exe", Services.AppPaths.EnsureStaging());
+        // トレイスレッドで例外を漏らすとアプリごと落ちるため必ず握る(#6)
+        try
+        {
+            Services.AppPaths.OpenFolder(Services.AppPaths.StagingPath);
+        }
+        catch (Exception ex)
+        {
+            App.Monitor.Note(R.F("LogError", $"{ex.Message} — {ex.GetType().Name}"));
+        }
     }
 
     private void OnTrayExitClick(object sender, RoutedEventArgs e)

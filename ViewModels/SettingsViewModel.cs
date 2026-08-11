@@ -157,8 +157,14 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenLogFolder()
     {
-        System.IO.Directory.CreateDirectory(AppPaths.LogsPath);
-        System.Diagnostics.Process.Start("explorer.exe", AppPaths.LogsPath);
+        try
+        {
+            AppPaths.OpenFolder(AppPaths.LogsPath);
+        }
+        catch (Exception ex)
+        {
+            _service.Note(R.F("LogError", $"{ex.Message} — {ex.GetType().Name}"));
+        }
     }
 
     [RelayCommand]
@@ -167,7 +173,14 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenStagingFolder()
     {
-        System.Diagnostics.Process.Start("explorer.exe", AppPaths.EnsureStaging());
+        try
+        {
+            AppPaths.OpenFolder(AppPaths.StagingPath);
+        }
+        catch (Exception ex)
+        {
+            _service.Note(R.F("LogError", $"{ex.Message} — {ex.GetType().Name}"));
+        }
     }
 
     private Task LoadStartupStateAsync()

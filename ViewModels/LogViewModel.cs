@@ -46,7 +46,13 @@ public partial class LogViewModel : ObservableObject
     [RelayCommand]
     private void OpenLogFolder()
     {
-        System.IO.Directory.CreateDirectory(AppPaths.LogsPath);
-        System.Diagnostics.Process.Start("explorer.exe", AppPaths.LogsPath);
+        try
+        {
+            AppPaths.OpenFolder(AppPaths.LogsPath);
+        }
+        catch (System.Exception ex)
+        {
+            _service.Note(R.F("LogError", $"{ex.Message} — {ex.GetType().Name}"));
+        }
     }
 }
