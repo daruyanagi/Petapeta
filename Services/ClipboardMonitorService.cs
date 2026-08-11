@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics.Imaging;
@@ -252,6 +253,7 @@ public sealed class ClipboardMonitorService
 
         var path = CreateUniqueStagingPath(".png");
         await SavePngAsync(source, path);
+        NoteStagingFileCreated();
         var file = await StorageFile.GetFileFromPathAsync(path);
 
         var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
@@ -278,7 +280,6 @@ public sealed class ClipboardMonitorService
         {
             Emit(FormatFileAdded(file.Name, sourceApp));
             SoundService.PlayFeedback();
-            _ = Task.Run(CleanupStaging);
         }
         else
         {
@@ -299,6 +300,7 @@ public sealed class ClipboardMonitorService
             var path = CreateUniqueStagingPath(".txt");
             await File.WriteAllTextAsync(path, _pendingText);
             _pendingFilePath = path;
+            NoteStagingFileCreated();
         }
 
         var file = await StorageFile.GetFileFromPathAsync(_pendingFilePath);
@@ -307,7 +309,6 @@ public sealed class ClipboardMonitorService
             _textAugmented = true;
             Emit(FormatFileAdded(file.Name, _pendingSourceApp));
             SoundService.PlayFeedback();
-            _ = Task.Run(CleanupStaging);
         }
         else
         {
@@ -428,14 +429,40 @@ public sealed class ClipboardMonitorService
         IsRoamable = false,
     };
 
-    /// <summary>保持期間・件数を超えた古いステージングファイルを削除する。</summary>
+    // ローワーターマーク方式のクリーンアップ(#4):
+    // 書き出しのたびに走らせず、件数がハイウォーターマーク(上限+Slack)に
+    // 達したとき・24時間経過・起動時のみ実行し、超過分をまとめて削除する。
+    private const int CleanupSlack = 20;
+    private static readonly TimeSpan CleanupInterval = TimeSpan.FromHours(24);
+
+    private int _stagingCount = -1;  // -1 = 未初期化(起動時のクリーンアップで確定)
+    private DateTime _lastCleanup = DateTime.MinValue;
+
+    /// <summary>ステージングにファイルを1件書き出したときに呼ぶ。必要ならクリーンアップを予約する。</summary>
+    private void NoteStagingFileCreated()
+    {
+        var count = Interlocked.Increment(ref _stagingCount);
+        var highWatermark = SettingsService.MaxFiles + CleanupSlack;
+        if (count >= highWatermark || DateTime.Now - _lastCleanup > CleanupInterval)
+        {
+            _ = Task.Run(CleanupStaging);
+        }
+    }
+
+    /// <summary>
+    /// 保持期間・件数(ローワーターマーク=最大保持件数)を超えたファイルを
+    /// まとめて削除する。起動時・ウォーターマーク到達時・手動実行時に呼ばれる。
+    /// </summary>
     private void CleanupStaging()
     {
         try
         {
+            _lastCleanup = DateTime.Now;
+
             var path = AppPaths.StagingPath;
             if (!Directory.Exists(path))
             {
+                Interlocked.Exchange(ref _stagingCount, 0);
                 return;
             }
 
@@ -461,6 +488,8 @@ public sealed class ClipboardMonitorService
                     }
                 }
             }
+
+            Interlocked.Exchange(ref _stagingCount, files.Count - deleted);
 
             if (deleted > 0)
             {
