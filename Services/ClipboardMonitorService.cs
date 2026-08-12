@@ -114,8 +114,13 @@ public sealed class ClipboardMonitorService
         }
     }
 
+    // クリップボード更新イベントは短時間に複数回飛ぶことがある(Chromium の
+    // 遅延フラッシュ等)。処理を直列化して二重ファイル化・ファイル名競合を防ぐ(#8)
+    private readonly SemaphoreSlim _processGate = new(1, 1);
+
     private async Task RunSafeAsync(Func<Task> action)
     {
+        await _processGate.WaitAsync();
         try
         {
             await action();
@@ -123,6 +128,10 @@ public sealed class ClipboardMonitorService
         catch (Exception ex)
         {
             Emit(R.F("LogError", Describe(ex)));
+        }
+        finally
+        {
+            _processGate.Release();
         }
     }
 
@@ -157,14 +166,9 @@ public sealed class ClipboardMonitorService
             return;
         }
 
-        try
-        {
-            await ProcessAsync();
-        }
-        catch (Exception ex)
-        {
-            Emit(R.F("LogError", Describe(ex)));
-        }
+        // 直列化(#8)。2発目以降のイベントは処理後の再読取でマーカーを
+        // 検知して no-op になる
+        await RunSafeAsync(ProcessAsync);
     }
 
     private async Task ProcessAsync()
@@ -503,17 +507,28 @@ public sealed class ClipboardMonitorService
         }
     }
 
-    /// <summary>ステージング内で重複しないファイルパスを作る。</summary>
+    /// <summary>
+    /// ステージング内で重複しないファイルパスをアトミックに確保する。
+    /// 存在チェック方式は並走時に同じパスを返し得るため、CreateNew で
+    /// 実際に確保できるまで連番を進める(#8)。
+    /// </summary>
     private static string CreateUniqueStagingPath(string extension)
     {
         var dir = AppPaths.EnsureStaging();
         var baseName = $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}";
-        var path = Path.Combine(dir, baseName + extension);
-        for (var i = 2; File.Exists(path); i++)
+        for (var i = 1; ; i++)
         {
-            path = Path.Combine(dir, $"{baseName} ({i}){extension}");
+            var path = Path.Combine(dir, i == 1 ? baseName + extension : $"{baseName} ({i}){extension}");
+            try
+            {
+                using (new FileStream(path, FileMode.CreateNew)) { }
+                return path;
+            }
+            catch (IOException)
+            {
+                // 既に存在 → 次の連番へ
+            }
         }
-        return path;
     }
 
     // Win+V 履歴には元のコピーが既に載っているので、書き換え分は履歴に入れない
