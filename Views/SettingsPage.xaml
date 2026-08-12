@@ -32,6 +32,12 @@
                 </controls:SettingsCard.HeaderIcon>
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsTextEnabled, Mode=TwoWay}" />
             </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="CardUrlImage" IsEnabled="{x:Bind ViewModel.IsMonitoringEnabled, Mode=OneWay}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE774;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsUrlImageEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
 
             <TextBlock x:Uid="SettingsSectionCleanup" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
             <controls:SettingsCard x:Uid="CardRetentionDays">

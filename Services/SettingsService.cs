@@ -22,6 +22,7 @@ public static class SettingsService
         public bool SoundEnabled { get; set; } = true;
         public string SoundEvent { get; set; } = "Notification.Default";
         public bool LogToFile { get; set; } = true;
+        public bool UrlImageEnabled { get; set; } = true;
     }
 
     private static readonly object Gate = new();
@@ -91,6 +92,13 @@ public static class SettingsService
     {
         get => Values.LogToFile;
         set { Values.LogToFile = value; Save(); }
+    }
+
+    /// <summary>コピーされたテキストが画像 URL のとき、画像をダウンロードしてファイル化するか。</summary>
+    public static bool UrlImageEnabled
+    {
+        get => Values.UrlImageEnabled;
+        set { Values.UrlImageEnabled = value; Save(); }
     }
 
     private static Model Load()

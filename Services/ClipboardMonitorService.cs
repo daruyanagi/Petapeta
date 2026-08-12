@@ -297,8 +297,13 @@ public sealed class ClipboardMonitorService
 
         if (_pendingFilePath is null)
         {
-            var path = CreateUniqueStagingPath(".txt");
-            await File.WriteAllTextAsync(path, _pendingText);
+            // テキストが画像 URL なら画像として取得(#7)。だめなら .txt へ
+            var path = await TryDownloadImageUrlAsync(_pendingText);
+            if (path is null)
+            {
+                path = CreateUniqueStagingPath(".txt");
+                await File.WriteAllTextAsync(path, _pendingText);
+            }
             _pendingFilePath = path;
             NoteStagingFileCreated();
         }
@@ -408,6 +413,95 @@ public sealed class ClipboardMonitorService
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern uint GetWindowThreadProcessId(nint hwnd, out uint pid);
+
+    private static readonly System.Net.Http.HttpClient Http = new()
+    {
+        Timeout = TimeSpan.FromSeconds(10),
+    };
+
+    /// <summary>
+    /// テキストが画像を指す URL なら画像をダウンロードしてステージングし、
+    /// パスを返す(#7)。URL でない・画像でない・失敗時は null(.txt へフォールバック)。
+    /// 拡張子ではなく Content-Type で判定する。
+    /// </summary>
+    private async Task<string?> TryDownloadImageUrlAsync(string text)
+    {
+        if (!SettingsService.UrlImageEnabled)
+        {
+            return null;
+        }
+
+        var candidate = text.Trim();
+        if (candidate.Length > 2048
+            || candidate.IndexOfAny(new[] { '\r', '\n', ' ' }) >= 0
+            || !Uri.TryCreate(candidate, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return null;
+        }
+
+        string? path = null;
+        try
+        {
+            using var response = await Http.GetAsync(uri, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var extension = response.Content.Headers.ContentType?.MediaType switch
+            {
+                "image/png" => ".png",
+                "image/jpeg" => ".jpg",
+                "image/gif" => ".gif",
+                "image/webp" => ".webp",
+                "image/bmp" => ".bmp",
+                "image/svg+xml" => ".svg",
+                "image/avif" => ".avif",
+                _ => null,
+            };
+            if (extension is null)
+            {
+                return null;
+            }
+
+            if (response.Content.Headers.ContentLength is > (long)MaxImageBytes)
+            {
+                return null;
+            }
+
+            path = CreateUniqueStagingPath(extension);
+            await using (var source = await response.Content.ReadAsStreamAsync())
+            await using (var dest = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
+                // Content-Length 詐称・欠落に備えてストリーミングで上限を確認する
+                var buffer = new byte[81920];
+                long total = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer)) > 0)
+                {
+                    total += read;
+                    if (total > (long)MaxImageBytes)
+                    {
+                        throw new InvalidOperationException("サイズ上限超過");
+                    }
+                    await dest.WriteAsync(buffer.AsMemory(0, read));
+                }
+            }
+
+            Emit(R.F("LogUrlImageDownloaded", Path.GetFileName(path)));
+            return path;
+        }
+        catch
+        {
+            // 失敗時は途中生成物を消して .txt フォールバックへ
+            if (path is not null)
+            {
+                try { File.Delete(path); } catch { }
+            }
+            return null;
+        }
+    }
 
     /// <summary>ステージング内で重複しないファイルパスを作る。</summary>
     private static string CreateUniqueStagingPath(string extension)
