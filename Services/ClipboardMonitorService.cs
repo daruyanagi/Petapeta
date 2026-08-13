@@ -193,8 +193,10 @@ public sealed class ClipboardMonitorService
             return;
         }
 
-        var hasBitmap = view.Contains(StandardDataFormats.Bitmap) && ImageEnabled;
-        var hasText = view.Contains(StandardDataFormats.Text) && TextEnabled;
+        var rawBitmap = view.Contains(StandardDataFormats.Bitmap);
+        var rawText = view.Contains(StandardDataFormats.Text);
+        var hasBitmap = rawBitmap && ImageEnabled;
+        var hasText = rawText && TextEnabled;
 
         // コピー元の特定は自分で再セットする前に行う(再セット後は所有者が自分になる)
         var sourceApp = GetClipboardOwnerProcessName();
@@ -209,6 +211,13 @@ public sealed class ClipboardMonitorService
         if (!hasText)
         {
             ClearPendingText();
+            // 形式的に対象外だったときだけ記録する(設定オフでのスルーは無ログ)。
+            // 「イベント未着」と「形式判定でスルー」を事後に切り分けるため(#9)
+            if (!rawBitmap && !rawText)
+            {
+                var formats = string.Join(", ", view.AvailableFormats.Take(8));
+                Emit(R.F("LogIgnoredFormats", formats.Length == 0 ? "-" : formats));
+            }
             return;
         }
 
@@ -237,6 +246,12 @@ public sealed class ClipboardMonitorService
         {
             try { _pendingRtf = await view.GetRtfAsync(); } catch { }
         }
+
+        // 保留したことを記録する。コピー直後に「無反応」に見えるのを防ぎ、
+        // イベント自体が届いたことの証跡にもなる(#9)
+        Emit(sourceApp is null
+            ? R.Get("LogTextPending")
+            : R.F("LogTextPendingFrom", sourceApp));
 
         if (ForegroundWatcher.IsExplorerForeground())
         {

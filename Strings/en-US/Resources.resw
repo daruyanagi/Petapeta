@@ -96,6 +96,9 @@
   <data name="LogFileAdded" xml:space="preserve"><value>File added to clipboard: {0}</value></data>
   <data name="LogFileAddedFrom" xml:space="preserve"><value>File added to clipboard: {0} (source: {1})</value></data>
   <data name="LogUrlImageDownloaded" xml:space="preserve"><value>Downloaded image URL: {0}</value></data>
+  <data name="LogTextPending" xml:space="preserve"><value>Text held pending (turns into a file when switching to File Explorer)</value></data>
+  <data name="LogTextPendingFrom" xml:space="preserve"><value>Text held pending (source: {0})</value></data>
+  <data name="LogIgnoredFormats" xml:space="preserve"><value>Skipped, no supported formats: {0}</value></data>
   <data name="LogUrlImageOn" xml:space="preserve"><value>Image URL download: on</value></data>
   <data name="LogUrlImageOff" xml:space="preserve"><value>Image URL download: off</value></data>
   <data name="LogSetContentFailed" xml:space="preserve"><value>Failed to update the clipboard</value></data>
