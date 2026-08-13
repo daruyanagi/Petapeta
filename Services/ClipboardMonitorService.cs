@@ -173,28 +173,43 @@ public sealed class ClipboardMonitorService
 
     private async Task ProcessAsync()
     {
-        var view = GetContentWithRetry();
-        if (view is null)
+        // Chromium 等のクリップボード書き込みは非アトミックで、変化通知の
+        // 時点では形式が出揃っていないことがある。対象形式が見つからない
+        // 場合は少し待ち、新しいビューを取り直して再判定する(#10)
+        DataPackageView? view;
+        bool rawBitmap;
+        bool rawText;
+        for (var attempt = 0; ; attempt++)
         {
-            Emit(R.Get("LogClipboardBusy"));
-            return;
+            view = GetContentWithRetry();
+            if (view is null)
+            {
+                Emit(R.Get("LogClipboardBusy"));
+                return;
+            }
+
+            if (view.Contains(MarkerFormat))
+            {
+                // 自分が書き換えた内容なので何もしない
+                return;
+            }
+
+            if (view.Contains(StandardDataFormats.StorageItems))
+            {
+                ClearPendingText();
+                Emit(R.Get("LogFileCopyDetected"));
+                return;
+            }
+
+            rawBitmap = view.Contains(StandardDataFormats.Bitmap);
+            rawText = view.Contains(StandardDataFormats.Text);
+            if (rawBitmap || rawText || attempt >= 2)
+            {
+                break;
+            }
+            await Task.Delay(200);
         }
 
-        if (view.Contains(MarkerFormat))
-        {
-            // 自分が書き換えた内容なので何もしない
-            return;
-        }
-
-        if (view.Contains(StandardDataFormats.StorageItems))
-        {
-            ClearPendingText();
-            Emit(R.Get("LogFileCopyDetected"));
-            return;
-        }
-
-        var rawBitmap = view.Contains(StandardDataFormats.Bitmap);
-        var rawText = view.Contains(StandardDataFormats.Text);
         var hasBitmap = rawBitmap && ImageEnabled;
         var hasText = rawText && TextEnabled;
 
