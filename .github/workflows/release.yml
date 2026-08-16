@@ -60,6 +60,17 @@ jobs:
               --generate-notes
           fi
 
+      # fork が upstream から遅れていると komac が CreateRef 権限エラーで失敗する
+      # (権限エラーに見えるが実体は fork の同期ずれ。winget-releaser#319、#11)。
+      # 毎回ここで fork を同期しておく。失敗しても公開自体は試みる。
+      - name: Sync winget-pkgs fork
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          gh api -X POST repos/daruyanagi/winget-pkgs/merge-upstream \
+            -f branch=master --jq '.message'
+
       - name: Publish to winget
         uses: vedantmgoyal9/winget-releaser@v2
         with:
