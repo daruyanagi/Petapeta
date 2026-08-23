@@ -24,16 +24,35 @@
         </Button>
 
         <ListView
+            x:Name="LogList"
             Grid.Row="1"
             ItemsSource="{x:Bind ViewModel.Logs}"
-            SelectionMode="None"
+            SelectionMode="Extended"
             IsItemClickEnabled="False">
+            <ListView.KeyboardAccelerators>
+                <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="OnCopyAccelerator" />
+            </ListView.KeyboardAccelerators>
+            <ListView.ContextFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem x:Uid="LogCopyMenuItem" Click="OnCopySelectedClick">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE8C8;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem x:Uid="LogCopyAllMenuItem" Click="OnCopyAllClick">
+                        <MenuFlyoutItem.Icon>
+                            <FontIcon Glyph="&#xE8B0;" />
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                </MenuFlyout>
+            </ListView.ContextFlyout>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="x:String">
                     <TextBlock
                         Text="{x:Bind}"
                         FontFamily="Consolas"
-                        TextWrapping="Wrap" />
+                        TextWrapping="Wrap"
+                        IsTextSelectionEnabled="True" />
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

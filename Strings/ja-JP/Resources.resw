@@ -79,6 +79,8 @@
   <data name="LogFolderCard.Header" xml:space="preserve"><value>ログフォルダー</value></data>
   <data name="LogFolderOpenButton.Content" xml:space="preserve"><value>開く</value></data>
   <data name="OpenLogFolderButtonLabel.Text" xml:space="preserve"><value>ログフォルダーを開く</value></data>
+  <data name="LogCopyMenuItem.Text" xml:space="preserve"><value>コピー</value></data>
+  <data name="LogCopyAllMenuItem.Text" xml:space="preserve"><value>すべてコピー</value></data>
 
   <!-- 情報 -->
   <data name="AboutDescription.Text" xml:space="preserve"><value>コピーした画像やテキストを、デスクトップやフォルダーへそのままペタペタ貼り付けられるようにする常駐ツールです。</value></data>
