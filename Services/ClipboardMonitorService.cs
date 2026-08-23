@@ -182,7 +182,7 @@ public sealed class ClipboardMonitorService
         bool rawText;
         for (var attempt = 0; ; attempt++)
         {
-            view = GetContentWithRetry();
+            view = await GetContentWithRetryAsync();
             if (view is null)
             {
                 Emit(R.Get("LogClipboardBusy"));
@@ -324,7 +324,7 @@ public sealed class ClipboardMonitorService
             return;
         }
 
-        if (SetContentWithRetry(package, CreateOptions()))
+        if (await SetContentWithRetryAsync(package, CreateOptions()))
         {
             Emit(FormatFileAdded(file.Name, sourceApp));
             SoundService.PlayFeedback();
@@ -366,7 +366,7 @@ public sealed class ClipboardMonitorService
             return;
         }
 
-        if (SetContentWithRetry(BuildTextPackage(file), CreateOptions()))
+        if (await SetContentWithRetryAsync(BuildTextPackage(file), CreateOptions()))
         {
             _textAugmented = true;
             // 自分の書き込みで世代が進むため取り直す(再追加・解除を壊さない)
@@ -381,30 +381,28 @@ public sealed class ClipboardMonitorService
     }
 
     /// <summary>CF_HDROP を外し、テキストのみのクリップボードへ戻す。</summary>
-    private Task RestoreTextAsync()
+    private async Task RestoreTextAsync()
     {
         _textAugmented = false;
 
         if (_pendingText is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         // 他のアプリが既にクリップボードを書き換えていたら触らない
-        var view = GetContentWithRetry();
+        var view = await GetContentWithRetryAsync();
         if (view is null || !view.Contains(MarkerFormat) || !view.Contains(StandardDataFormats.StorageItems))
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        if (SetContentWithRetry(BuildTextPackage(file: null), CreateOptions()))
+        if (await SetContentWithRetryAsync(BuildTextPackage(file: null), CreateOptions()))
         {
             // 自分の書き込みで世代が進むため取り直す(#14)
             _pendingSequence = GetClipboardSequenceNumber();
             Emit(R.Get("LogHdropRemoved"));
         }
-
-        return Task.CompletedTask;
     }
 
     private DataPackage BuildTextPackage(StorageFile? file)
@@ -685,7 +683,10 @@ public sealed class ClipboardMonitorService
         await encoder.FlushAsync();
     }
 
-    private static DataPackageView? GetContentWithRetry()
+    // 注意: Clipboard API は UI(STA)スレッドを要するため ConfigureAwait(false) は
+    // 使わない(await 後も UI コンテキストで継続させる)。同期版の
+    // Task.Delay().Wait() は UI スレッドを最大約 500ms ブロックしていた(#16)
+    private static async Task<DataPackageView?> GetContentWithRetryAsync()
     {
         for (var i = 0; i < MaxRetries; i++)
         {
@@ -695,13 +696,13 @@ public sealed class ClipboardMonitorService
             }
             catch
             {
-                Task.Delay(RetryDelayMs).Wait();
+                await Task.Delay(RetryDelayMs);
             }
         }
         return null;
     }
 
-    private static bool SetContentWithRetry(DataPackage package, ClipboardContentOptions options)
+    private static async Task<bool> SetContentWithRetryAsync(DataPackage package, ClipboardContentOptions options)
     {
         for (var i = 0; i < MaxRetries; i++)
         {
@@ -716,7 +717,7 @@ public sealed class ClipboardMonitorService
             {
                 // 使用中の可能性 — リトライへ
             }
-            Task.Delay(RetryDelayMs).Wait();
+            await Task.Delay(RetryDelayMs);
         }
         return false;
     }
