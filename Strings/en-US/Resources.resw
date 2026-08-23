@@ -42,7 +42,7 @@
   <data name="CardText.Header" xml:space="preserve"><value>Turn text into files</value></data>
   <data name="CardText.Description" xml:space="preserve"><value>Makes text pastable as a .txt file only while File Explorer is in the foreground. Other apps receive plain text as usual</value></data>
   <data name="CardUrlImage.Header" xml:space="preserve"><value>Download image URLs as files</value></data>
-  <data name="CardUrlImage.Description" xml:space="preserve"><value>When the copied text is an image URL, fetches the image so it can be pasted as a file (fetched only when switching to File Explorer)</value></data>
+  <data name="CardUrlImage.Description" xml:space="preserve"><value>When the copied text is an image URL, accesses that URL to fetch the image so it can be pasted as a file (network access happens only when switching to File Explorer)</value></data>
   <data name="SettingsSectionCleanup.Text" xml:space="preserve"><value>Cleanup</value></data>
   <data name="CardRetentionDays.Header" xml:space="preserve"><value>Days to keep files</value></data>
   <data name="CardRetentionDays.Description" xml:space="preserve"><value>Staging files older than this are deleted automatically</value></data>
