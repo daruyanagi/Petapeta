@@ -63,6 +63,9 @@ public sealed class ClipboardMonitorService
     private string? _pendingRtf;
     private string? _pendingFilePath;
     private string? _pendingSourceApp;
+    // 保留内容を読み取った時点のクリップボード世代。書き戻し直前に一致を
+    // 確認し、処理中に発生した新しいコピーを上書きしない(#14)
+    private uint _pendingSequence;
     private bool _textAugmented;
 
     public void Start()
@@ -213,13 +216,17 @@ public sealed class ClipboardMonitorService
         var hasBitmap = rawBitmap && ImageEnabled;
         var hasText = rawText && TextEnabled;
 
+        // この時点のクリップボード世代。以降の書き戻しはこの世代が
+        // 変わっていないことを条件にする(#14)
+        var sequence = GetClipboardSequenceNumber();
+
         // コピー元の特定は自分で再セットする前に行う(再セット後は所有者が自分になる)
         var sourceApp = GetClipboardOwnerProcessName();
 
         if (hasBitmap)
         {
             ClearPendingText();
-            await AugmentImageAsync(view, sourceApp);
+            await AugmentImageAsync(view, sourceApp, sequence);
             return;
         }
 
@@ -251,6 +258,7 @@ public sealed class ClipboardMonitorService
         _pendingRtf = null;
         _pendingFilePath = null;
         _pendingSourceApp = sourceApp;
+        _pendingSequence = sequence;
         _textAugmented = false;
 
         if (view.Contains(StandardDataFormats.Html))
@@ -275,7 +283,7 @@ public sealed class ClipboardMonitorService
     }
 
     /// <summary>画像を PNG として書き出し、CF_HDROP を追加して再セットする。</summary>
-    private async Task AugmentImageAsync(DataPackageView view, string? sourceApp)
+    private async Task AugmentImageAsync(DataPackageView view, string? sourceApp, uint sequence)
     {
         var reference = await view.GetBitmapAsync();
         using var source = await reference.OpenReadAsync();
@@ -310,6 +318,14 @@ public sealed class ClipboardMonitorService
         package.SetStorageItems(new[] { file }, readOnly: false);
         package.SetData(MarkerFormat, "1");
 
+        // エンコード中に新しいコピーが発生していたら書き戻さない(#14)
+        if (GetClipboardSequenceNumber() != sequence)
+        {
+            try { File.Delete(path); } catch { }
+            Emit(R.Get("LogStaleClipboardSkip"));
+            return;
+        }
+
         if (SetContentWithRetry(package, CreateOptions()))
         {
             Emit(FormatFileAdded(file.Name, sourceApp));
@@ -343,9 +359,20 @@ public sealed class ClipboardMonitorService
         }
 
         var file = await StorageFile.GetFileFromPathAsync(_pendingFilePath);
+
+        // ダウンロード等の最中に新しいコピーが発生していたら書き戻さない。
+        // 新しいコピーのイベントはゲート待ちで後続処理される(#14)
+        if (GetClipboardSequenceNumber() != _pendingSequence)
+        {
+            Emit(R.Get("LogStaleClipboardSkip"));
+            return;
+        }
+
         if (SetContentWithRetry(BuildTextPackage(file), CreateOptions()))
         {
             _textAugmented = true;
+            // 自分の書き込みで世代が進むため取り直す(再追加・解除を壊さない)
+            _pendingSequence = GetClipboardSequenceNumber();
             Emit(FormatFileAdded(file.Name, _pendingSourceApp));
             SoundService.PlayFeedback();
         }
@@ -374,6 +401,8 @@ public sealed class ClipboardMonitorService
 
         if (SetContentWithRetry(BuildTextPackage(file: null), CreateOptions()))
         {
+            // 自分の書き込みで世代が進むため取り直す(#14)
+            _pendingSequence = GetClipboardSequenceNumber();
             Emit(R.Get("LogHdropRemoved"));
         }
 
@@ -407,6 +436,7 @@ public sealed class ClipboardMonitorService
         _pendingRtf = null;
         _pendingFilePath = null;
         _pendingSourceApp = null;
+        _pendingSequence = 0;
         _textAugmented = false;
     }
 
@@ -444,6 +474,9 @@ public sealed class ClipboardMonitorService
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern nint GetClipboardOwner();
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern uint GetClipboardSequenceNumber();
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern uint GetWindowThreadProcessId(nint hwnd, out uint pid);

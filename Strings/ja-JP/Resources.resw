@@ -99,6 +99,7 @@
   <data name="LogTextPending" xml:space="preserve"><value>テキストを保留しました(エクスプローラーへの切り替えでファイル化)</value></data>
   <data name="LogTextPendingFrom" xml:space="preserve"><value>テキストを保留しました(コピー元: {0})</value></data>
   <data name="LogIgnoredFormats" xml:space="preserve"><value>対象外の形式のためスキップ: {0}</value></data>
+  <data name="LogStaleClipboardSkip" xml:space="preserve"><value>書き戻しを中止しました(処理中にクリップボードが更新されたため)</value></data>
   <data name="LogUrlImageOn" xml:space="preserve"><value>画像 URL のダウンロード: オン</value></data>
   <data name="LogUrlImageOff" xml:space="preserve"><value>画像 URL のダウンロード: オフ</value></data>
   <data name="LogSetContentFailed" xml:space="preserve"><value>クリップボードの再セットに失敗しました</value></data>
