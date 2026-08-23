@@ -58,7 +58,7 @@
 
 必要なもの:
 
-- [.NET SDK 8.0 以降](https://dotnet.microsoft.com/)
+- [.NET SDK 10.0 以降](https://dotnet.microsoft.com/)
 - [Windows App SDK / WinUI 3 のツール](https://learn.microsoft.com/windows/apps/windows-app-sdk/)
 - 開発者モードを有効化
 
