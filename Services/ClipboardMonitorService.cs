@@ -99,20 +99,18 @@ public sealed class ClipboardMonitorService
     /// <summary>最前面がエクスプローラーかどうかの変化を受け取る(ForegroundWatcher から)。</summary>
     public void OnExplorerForegroundChanged(bool isExplorer)
     {
-        if (!IsEnabled)
-        {
-            return;
-        }
-
         if (isExplorer)
         {
-            if (TextEnabled && _pendingText is not null && !_textAugmented)
+            if (IsEnabled && TextEnabled && _pendingText is not null && !_textAugmented)
             {
                 _ = RunSafeAsync(AugmentTextAsync);
             }
         }
         else if (_textAugmented)
         {
+            // 復元は自分が書き換えたクリップボードの後始末なので、
+            // 監視の一時停止中でも実行する。止めてしまうと HDROP が残り、
+            // Web エディター等でファイル貼り付けが優先される問題が再発する(#15)
             _ = RunSafeAsync(RestoreTextAsync);
         }
     }
