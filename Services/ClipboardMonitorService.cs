@@ -283,16 +283,26 @@ public sealed class ClipboardMonitorService
     /// <summary>画像を PNG として書き出し、CF_HDROP を追加して再セットする。</summary>
     private async Task AugmentImageAsync(DataPackageView view, string? sourceApp, uint sequence)
     {
-        var reference = await view.GetBitmapAsync();
-        using var source = await reference.OpenReadAsync();
-        if (source.Size > MaxImageBytes)
+        // コピー元の書き込みが未完のストリームを読むと、行単位のゴミや
+        // WINCODEC_ERR_UNEXPECTEDSIZE (0x88982F72) になる。全量をバッファに
+        // 読み、二重読みで安定を確認してからデコードする(#25)
+        var data = await ReadStableBitmapBytesAsync(view);
+        if (data is null)
         {
-            Emit(R.F("LogImageTooLarge", source.Size / 1024 / 1024));
             return;
         }
 
         var path = CreateUniqueStagingPath(".png");
-        await SavePngAsync(source, path);
+        try
+        {
+            await SavePngAsync(data, path);
+        }
+        catch
+        {
+            // 失敗した予約ファイル(0バイト残骸)を残さない(#25)
+            try { File.Delete(path); } catch { }
+            throw;
+        }
         NoteStagingFileCreated();
         var file = await StorageFile.GetFileFromPathAsync(path);
 
@@ -767,9 +777,99 @@ public sealed class ClipboardMonitorService
         }
     }
 
-    private static async Task SavePngAsync(IRandomAccessStreamWithContentType source, string path)
+    /// <summary>
+    /// クリップボードのビットマップを全量読み、直後の再読で内容が一致する
+    /// (=コピー元の書き込みが完了している)ことを確認して返す(#25)。
+    /// 不安定・読み取り失敗時は待ってから新しいビューで取り直す。
+    /// </summary>
+    private async Task<byte[]?> ReadStableBitmapBytesAsync(DataPackageView view)
     {
-        var decoder = await BitmapDecoder.CreateAsync(source);
+        // サイズ上限の事前チェック(従来のログを維持)
+        try
+        {
+            var reference = await view.GetBitmapAsync();
+            using var probe = await reference.OpenReadAsync();
+            if (probe.Size > MaxImageBytes)
+            {
+                Emit(R.F("LogImageTooLarge", probe.Size / 1024 / 1024));
+                return null;
+            }
+        }
+        catch
+        {
+            // 読み取り失敗は下のループでリトライされる
+        }
+
+        byte[]? previous = null;
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            byte[]? current = null;
+            try
+            {
+                current = await ReadBitmapBytesOnceAsync(view);
+            }
+            catch
+            {
+                // WINCODEC_ERR_UNEXPECTEDSIZE (0x88982F72) 等 → 取り直しへ
+            }
+
+            if (current is not null && previous is not null && BuffersLookEqual(previous, current))
+            {
+                return current;  // 2回連続で一致 → 安定(通常は待ちなしの2回で確定)
+            }
+            previous = current;
+
+            if (attempt >= 1)
+            {
+                // 不安定 → コピー元の書き込み完了を待って新しいビューで取り直す
+                await Task.Delay(200);
+                var fresh = await GetContentWithRetryAsync();
+                if (fresh is null || fresh.Contains(MarkerFormat)
+                    || !fresh.Contains(StandardDataFormats.Bitmap))
+                {
+                    return null;  // 内容が変わった/読めない → このコピーは打ち切り
+                }
+                view = fresh;
+            }
+        }
+
+        Emit(R.Get("LogImageReadUnstable"));
+        return null;
+    }
+
+    private static async Task<byte[]?> ReadBitmapBytesOnceAsync(DataPackageView view)
+    {
+        var reference = await view.GetBitmapAsync();
+        using var source = await reference.OpenReadAsync();
+        if (source.Size == 0 || source.Size > MaxImageBytes)
+        {
+            return null;
+        }
+
+        using var stream = source.AsStreamForRead();
+        using var memory = new MemoryStream((int)source.Size);
+        await stream.CopyToAsync(memory);
+        return memory.ToArray();
+    }
+
+    private static bool BuffersLookEqual(byte[] a, byte[] b)
+    {
+        if (a.Length != b.Length)
+        {
+            return false;
+        }
+        var tail = Math.Min(256, a.Length);
+        return a.AsSpan(a.Length - tail).SequenceEqual(b.AsSpan(b.Length - tail));
+    }
+
+    private static async Task SavePngAsync(byte[] data, string path)
+    {
+        // 完全性を確認済みのバッファからデコードする(#25)
+        using var memory = new InMemoryRandomAccessStream();
+        await memory.WriteAsync(System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(data));
+        memory.Seek(0);
+
+        var decoder = await BitmapDecoder.CreateAsync(memory);
         using var bitmap = await decoder.GetSoftwareBitmapAsync(
             BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
 
