@@ -6,8 +6,7 @@
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
-  IgnorableNamespaces="uap desktop6 rescap systemai">
+  IgnorableNamespaces="uap desktop6 rescap">
 
   <Identity
     Name="D654E410-3490-41E5-9EC3-6C089AED68EC"
@@ -52,6 +51,5 @@
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
     <rescap:Capability Name="unvirtualizedResources" />
-    <systemai:Capability Name="systemAIModels"/>
   </Capabilities>
 </Package>
