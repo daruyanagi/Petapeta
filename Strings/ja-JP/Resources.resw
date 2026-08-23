@@ -42,7 +42,7 @@
   <data name="CardText.Header" xml:space="preserve"><value>テキストをファイル化</value></data>
   <data name="CardText.Description" xml:space="preserve"><value>エクスプローラーが前面の間だけ .txt として貼り付け可能にします。他のアプリへは通常どおりテキストで貼り付きます</value></data>
   <data name="CardUrlImage.Header" xml:space="preserve"><value>画像 URL をダウンロードしてファイル化</value></data>
-  <data name="CardUrlImage.Description" xml:space="preserve"><value>コピーしたテキストが画像の URL のとき、画像を取得してファイルとして貼り付けられるようにします(取得はエクスプローラーへ切り替えたときのみ)</value></data>
+  <data name="CardUrlImage.Description" xml:space="preserve"><value>コピーしたテキストが画像の URL のとき、その URL へアクセスして画像を取得し、ファイルとして貼り付けられるようにします(通信はエクスプローラーへ切り替えたときのみ発生)</value></data>
   <data name="SettingsSectionCleanup.Text" xml:space="preserve"><value>クリーンアップ</value></data>
   <data name="CardRetentionDays.Header" xml:space="preserve"><value>保持日数</value></data>
   <data name="CardRetentionDays.Description" xml:space="preserve"><value>この日数を過ぎたステージングファイルを自動削除します</value></data>

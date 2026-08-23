@@ -477,10 +477,101 @@ public sealed class ClipboardMonitorService
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern uint GetWindowThreadProcessId(nint hwnd, out uint pid);
 
-    private static readonly System.Net.Http.HttpClient Http = new()
+    // リダイレクト先を自前で再検証するため自動リダイレクトは無効にする(#18)
+    private static readonly System.Net.Http.HttpClient Http = new(
+        new System.Net.Http.SocketsHttpHandler { AllowAutoRedirect = false })
     {
         Timeout = TimeSpan.FromSeconds(10),
     };
+
+    private const int MaxRedirects = 3;
+
+    /// <summary>
+    /// ダウンロードを許可するホストか。ループバック・プライベート・
+    /// リンクローカル宛(社内機器等)への自動アクセスを防ぐ(#18)。
+    /// ホスト名は DNS 解決して全アドレスを確認する。
+    /// </summary>
+    private static async Task<bool> IsAllowedHostAsync(Uri uri)
+    {
+        try
+        {
+            System.Net.IPAddress[] addresses;
+            if (uri.HostNameType is UriHostNameType.IPv4 or UriHostNameType.IPv6)
+            {
+                addresses = new[] { System.Net.IPAddress.Parse(uri.IdnHost) };
+            }
+            else
+            {
+                addresses = await System.Net.Dns.GetHostAddressesAsync(uri.IdnHost);
+            }
+            return addresses.Length > 0 && !addresses.Any(IsBlockedAddress);
+        }
+        catch
+        {
+            // 解決できないホストは拒否(どのみち接続も失敗する)
+            return false;
+        }
+    }
+
+    private static bool IsBlockedAddress(System.Net.IPAddress ip)
+    {
+        if (ip.IsIPv4MappedToIPv6)
+        {
+            ip = ip.MapToIPv4();
+        }
+        if (System.Net.IPAddress.IsLoopback(ip))
+        {
+            return true;
+        }
+        if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            var b = ip.GetAddressBytes();
+            return b[0] == 0
+                || b[0] == 10
+                || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+                || (b[0] == 192 && b[1] == 168)
+                || (b[0] == 169 && b[1] == 254);
+        }
+        if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            return ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal || ip.IsIPv6UniqueLocal
+                || ip.Equals(System.Net.IPAddress.IPv6Any);
+        }
+        // 未知のアドレスファミリは拒否
+        return true;
+    }
+
+    /// <summary>
+    /// リダイレクトを最大 MaxRedirects 回まで手動で追跡する。各リダイレクト先も
+    /// スキーム・ホストの検証を通す(#18)。最終応答を返す(失敗時 null)。
+    /// </summary>
+    private static async Task<System.Net.Http.HttpResponseMessage?> FetchWithValidatedRedirectsAsync(Uri uri)
+    {
+        var current = uri;
+        for (var redirects = 0; ; redirects++)
+        {
+            var response = await Http.GetAsync(current, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+            var status = (int)response.StatusCode;
+            if (status < 300 || status >= 400)
+            {
+                return response;
+            }
+
+            var location = response.Headers.Location;
+            response.Dispose();
+            if (redirects >= MaxRedirects || location is null)
+            {
+                return null;
+            }
+
+            current = location.IsAbsoluteUri ? location : new Uri(current, location);
+            if ((current.Scheme != Uri.UriSchemeHttp && current.Scheme != Uri.UriSchemeHttps)
+                || !await IsAllowedHostAsync(current))
+            {
+                return null;
+            }
+        }
+    }
 
     /// <summary>
     /// テキストが画像を指す URL なら画像をダウンロードしてステージングし、
@@ -503,15 +594,22 @@ public sealed class ClipboardMonitorService
             return null;
         }
 
+        // プライベート/ループバック宛の URL は拒否(#18)
+        if (!await IsAllowedHostAsync(uri))
+        {
+            return null;
+        }
+
         string? path = null;
         try
         {
-            using var response = await Http.GetAsync(uri, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
-            if (!response.IsSuccessStatusCode)
+            using var response = await FetchWithValidatedRedirectsAsync(uri);
+            if (response is null || !response.IsSuccessStatusCode)
             {
                 return null;
             }
 
+            // SVG はスクリプトを含み得るため対象外(#18)
             var extension = response.Content.Headers.ContentType?.MediaType switch
             {
                 "image/png" => ".png",
@@ -519,7 +617,6 @@ public sealed class ClipboardMonitorService
                 "image/gif" => ".gif",
                 "image/webp" => ".webp",
                 "image/bmp" => ".bmp",
-                "image/svg+xml" => ".svg",
                 "image/avif" => ".avif",
                 _ => null,
             };
