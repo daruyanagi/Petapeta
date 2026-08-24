@@ -85,7 +85,34 @@
   <!-- About -->
   <data name="AboutDescription.Text" xml:space="preserve"><value>A resident tool that lets you paste copied images and text straight into the desktop or any folder as files.</value></data>
   <data name="AboutAcknowledgements.Text" xml:space="preserve"><value>Acknowledgements — this app uses the following open source components</value></data>
-  <data name="AboutVersionFmt" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="AboutVersionChannelFmt" xml:space="preserve"><value>Version {0} ({1})</value></data>
+  <data name="AboutChannelZip" xml:space="preserve"><value>ZIP</value></data>
+  <data name="AboutChannelWinget" xml:space="preserve"><value>winget</value></data>
+  <data name="AboutChannelPackaged" xml:space="preserve"><value>Packaged (Store)</value></data>
+
+  <!-- Updates (#12) -->
+  <data name="AboutUpdateSection.Text" xml:space="preserve"><value>Updates</value></data>
+  <data name="CardUpdateNow.Header" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="UpdateCheckNowButton.Content" xml:space="preserve"><value>Check now</value></data>
+  <data name="UpdateLastCheckedFmt" xml:space="preserve"><value>Last checked: {0}</value></data>
+  <data name="UpdateNotChecked" xml:space="preserve"><value>Not checked yet</value></data>
+  <data name="UpdateChecking" xml:space="preserve"><value>Checking…</value></data>
+  <data name="UpdateLatest" xml:space="preserve"><value>You're up to date</value></data>
+  <data name="UpdateErrorText" xml:space="preserve"><value>Could not check for updates</value></data>
+  <data name="UpdateAvailableFmt" xml:space="preserve"><value>{0} is available</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>Downloading the update…</value></data>
+  <data name="UpdateRestartAndUpdate" xml:space="preserve"><value>Restart and update</value></data>
+  <data name="UpdateViaWinget" xml:space="preserve"><value>Close and update via winget</value></data>
+  <data name="UpdateOpenReleasePage" xml:space="preserve"><value>Open the release page</value></data>
+  <data name="UpdateCancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="UpdateConfirmButton" xml:space="preserve"><value>Continue</value></data>
+  <data name="UpdateSelfUpdateUnavailableFmt" xml:space="preserve"><value>{0} cannot be installed from inside the app. Get it from the release page</value></data>
+  <data name="UpdateWingetConfirmTitle" xml:space="preserve"><value>Update via winget</value></data>
+  <data name="UpdateWingetConfirmBody" xml:space="preserve"><value>The app will close and run winget upgrade (progress appears in a console window). The app does not restart automatically.</value></data>
+  <data name="UpdateRestartConfirmTitle" xml:space="preserve"><value>Restart and update</value></data>
+  <data name="UpdateRestartConfirmBody" xml:space="preserve"><value>After the update is downloaded and verified, the app restarts to apply it. Clipboard monitoring stops only during the switch.</value></data>
+  <data name="CardUpdateCheck.Header" xml:space="preserve"><value>Check for updates automatically</value></data>
+  <data name="CardUpdateCheck.Description" xml:space="preserve"><value>Checks once a day whether a new version is available (nothing is downloaded or installed automatically)</value></data>
 
   <!-- Log messages -->
   <data name="LogMonitoringStarted" xml:space="preserve"><value>Clipboard monitoring started</value></data>
@@ -119,4 +146,7 @@
   <data name="LogStartupDenied" xml:space="preserve"><value>Could not enable auto-start. Allow it in Settings &gt; Apps &gt; Startup</value></data>
   <data name="LogStartupQueryFailed" xml:space="preserve"><value>Failed to read the startup setting: {0}</value></data>
   <data name="LogStartupChangeFailed" xml:space="preserve"><value>Failed to change the startup setting: {0}</value></data>
+  <data name="LogUpdateAvailable" xml:space="preserve"><value>Update available: {0} (apply it from the About page)</value></data>
+  <data name="LogUpdateCheckOn" xml:space="preserve"><value>Automatic update check: on</value></data>
+  <data name="LogUpdateCheckOff" xml:space="preserve"><value>Automatic update check: off</value></data>
 </root>

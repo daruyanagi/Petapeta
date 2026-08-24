@@ -5,10 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     mc:Ignorable="d">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Padding="24" Spacing="8" HorizontalAlignment="Left">
+        <StackPanel Padding="24" Spacing="8">
 
             <StackPanel Orientation="Horizontal" Spacing="16">
                 <Image Source="ms-appx:///Assets/AppIcon.ico" Width="48" Height="48" VerticalAlignment="Center" />
@@ -27,6 +28,25 @@
                 Content="GitHub - daruyanagi"
                 NavigateUri="https://github.com/daruyanagi"
                 Padding="0,4" />
+
+            <!-- 更新(#12)。MSIX 版はストアに任せるためセクションごと出さない -->
+            <StackPanel x:Name="UpdateSection" Spacing="8" Margin="0,16,0,0">
+                <TextBlock x:Uid="AboutUpdateSection" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <controls:SettingsCard x:Name="UpdateCard" x:Uid="CardUpdateNow">
+                    <controls:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE895;" />
+                    </controls:SettingsCard.HeaderIcon>
+                    <Button x:Name="CheckButton" x:Uid="UpdateCheckNowButton" Click="OnCheckClick" />
+                </controls:SettingsCard>
+                <InfoBar x:Name="UpdateBar" IsOpen="True" IsClosable="False">
+                    <ProgressBar
+                        x:Name="DownloadProgress"
+                        Minimum="0"
+                        Maximum="1"
+                        Margin="0,0,16,12"
+                        Visibility="Collapsed" />
+                </InfoBar>
+            </StackPanel>
 
             <TextBlock
                 x:Uid="AboutAcknowledgements"

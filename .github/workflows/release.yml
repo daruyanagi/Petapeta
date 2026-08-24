@@ -40,6 +40,12 @@ jobs:
           $tag = "${{ github.ref_name }}"
           Compress-Archive -Path publish/x64/*   -DestinationPath "Petapeta-$tag-win-x64.zip"
           Compress-Archive -Path publish/arm64/* -DestinationPath "Petapeta-$tag-win-arm64.zip"
+          # ZIP 版の自前更新(#12)がダウンロード後の検証に使う sha256sum 形式の
+          # チェックサム。これが無いリリースは自前更新の対象外になる
+          foreach ($zip in "Petapeta-$tag-win-x64.zip", "Petapeta-$tag-win-arm64.zip") {
+            $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+            Set-Content -Path "$zip.sha256" -Value "$hash  $zip" -NoNewline
+          }
 
       - name: Create or update GitHub Release
         shell: bash
@@ -50,12 +56,16 @@ jobs:
           if gh release view "$tag" > /dev/null 2>&1; then
             gh release upload "$tag" \
               "Petapeta-${tag}-win-x64.zip" \
+              "Petapeta-${tag}-win-x64.zip.sha256" \
               "Petapeta-${tag}-win-arm64.zip" \
+              "Petapeta-${tag}-win-arm64.zip.sha256" \
               --clobber
           else
             gh release create "$tag" \
               "Petapeta-${tag}-win-x64.zip" \
+              "Petapeta-${tag}-win-x64.zip.sha256" \
               "Petapeta-${tag}-win-arm64.zip" \
+              "Petapeta-${tag}-win-arm64.zip.sha256" \
               --title "$tag" \
               --generate-notes
           fi

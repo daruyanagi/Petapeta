@@ -76,6 +76,15 @@ public partial class App : Application
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+        // 更新の仕上げ役として起動されたときは、UI もインスタンス登録もせずに
+        // 差し替えだけ行って終わる(#12)。多重起動防止より先に分岐しないと、
+        // 終了中の旧インスタンスへリダイレクトして何もせず消えてしまう。
+        if (UpdateSwap.ParseFinishArgs(Environment.GetCommandLineArgs()[1..]) is { } finish)
+        {
+            _ = FinishUpdateAsync(finish.InstallDir, finish.WaitForPid);
+            return;
+        }
+
         // 多重起動防止: 2つ目以降のインスタンスは既存インスタンスへ
         // アクティベーションを渡して即終了する
         var mainInstance = AppInstance.FindOrRegisterForKey("main");
@@ -96,6 +105,13 @@ public partial class App : Application
         Foreground.ExplorerForegroundChanged += Monitor.OnExplorerForegroundChanged;
         Foreground.Start();
 
+        if (!PackageContext.IsPackaged)
+        {
+            // 前回の更新で残った .old / .update を片付ける。消せなくても支障は無い
+            UpdateSwap.CleanupBackup(AppContext.BaseDirectory.TrimEnd(System.IO.Path.DirectorySeparatorChar));
+        }
+        _ = UpdateService.RunBackgroundLoopAsync();
+
         // スタートアップ(自動起動)または「最小化で起動」設定のときは
         // ウィンドウを出さずトレイのみで開始する
         var launchedAtStartup = Environment.GetCommandLineArgs()
@@ -104,6 +120,57 @@ public partial class App : Application
         if (!startHidden)
         {
             Window.Activate();
+        }
+    }
+
+    /// <summary>
+    /// 旧プロセスの終了を待って差し替え、本来の場所から起動し直す(#12)。
+    /// このプロセスは展開先(インストール先の隣)から動いており、
+    /// 差し替え対象の外にいるので、実行中の exe / DLL を掴んでいない。
+    ///
+    /// 失敗しても旧版が起動できる状態に戻すのが最優先。
+    /// 「更新できなかった」はやり直せるが、「更新に失敗して壊れた」は戻せない。
+    /// </summary>
+    private static async Task FinishUpdateAsync(string installDir, int waitForPid)
+    {
+        try
+        {
+            var staging = AppContext.BaseDirectory.TrimEnd(System.IO.Path.DirectorySeparatorChar);
+            UpdateService.Trace($"FinishUpdate: staging={staging} install={installDir} pid={waitForPid}");
+
+            // 待ちきれないまま差し替えると、掴まれたままのファイルを動かすことになる
+            if (await UpdateSwap.WaitForExitAsync(waitForPid, TimeSpan.FromSeconds(30)))
+            {
+                var result = UpdateSwap.Swap(installDir, staging);
+                UpdateService.Trace($"FinishUpdate: {result}");
+            }
+            else
+            {
+                UpdateService.Trace("FinishUpdate: 旧プロセスが終わらないので差し替えを中止する");
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateService.Trace($"FinishUpdate: 失敗 {ex}");
+        }
+        finally
+        {
+            // Broken のときは installDir に本体が無く起動も失敗するが、
+            // ここで黙って終わるよりログと手がかりが残る方がよい
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = System.IO.Path.Combine(installDir, "Petapeta.exe"),
+                    WorkingDirectory = installDir,
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception ex)
+            {
+                UpdateService.Trace($"FinishUpdate(launch): 失敗 {ex}");
+            }
+            Environment.Exit(0);
         }
     }
 
