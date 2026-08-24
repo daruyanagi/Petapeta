@@ -15,6 +15,8 @@
     <Nullable>enable</Nullable>
     <DefaultLanguage>ja-JP</DefaultLanguage>
     <Version>1.0.4</Version>
+    <!-- exe 埋め込みアイコン。無いとエクスプローラー等で既定アイコンになる(#36) -->
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <!-- アンパッケージド(ZIP/winget)配布用: .NET と Windows App SDK を自己完結にする -->
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
@@ -27,7 +29,12 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
     <Content Include="Assets\StoreLogo.png" />
-    <Content Include="Assets\AppIcon.ico" />
+    <!-- トレイ(ms-appx)とウィンドウアイコンが実ファイルを参照する。
+         CopyToOutputDirectory が無いと dotnet publish の出力に入らず、
+         ZIP/winget 版でアイコンが欠ける(#36) -->
+    <Content Include="Assets\AppIcon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
 
