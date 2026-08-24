@@ -292,10 +292,29 @@ public sealed class ClipboardMonitorService
             return;
         }
 
-        var path = CreateUniqueStagingPath(".png");
+        // 保存形式(#41)。「そのまま」はコピー元の形式を判別して元バイト列を
+        // 保存する(JPEG の再圧縮劣化を避け、GIF ならアニメーションも保てる)。
+        // 判別できない形式(DIB など)は従来どおり PNG に再エンコードする
+        var format = SettingsService.ImageSaveFormat;
+        var originalExtension = format == "Original" ? SniffImageExtension(data) : null;
+        var extension = format switch
+        {
+            "Jpeg" => ".jpg",
+            "Original" => originalExtension ?? ".png",
+            _ => ".png",
+        };
+        var path = CreateUniqueStagingPath(extension);
         try
         {
-            await SavePngAsync(data, path);
+            if (originalExtension is not null)
+            {
+                await SaveOriginalAsync(data, path);
+            }
+            else
+            {
+                await SaveEncodedAsync(data, path,
+                    format == "Jpeg" ? BitmapEncoder.JpegEncoderId : BitmapEncoder.PngEncoderId);
+            }
         }
         catch
         {
@@ -862,7 +881,34 @@ public sealed class ClipboardMonitorService
         return a.AsSpan(a.Length - tail).SequenceEqual(b.AsSpan(b.Length - tail));
     }
 
-    private static async Task SavePngAsync(byte[] data, string path)
+    /// <summary>先頭バイトから画像形式を判別する。判別できなければ null(PNG へ再エンコード)。</summary>
+    private static string? SniffImageExtension(byte[] data)
+    {
+        if (data.Length < 12)
+        {
+            return null;
+        }
+        if (data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47) return ".png";
+        if (data[0] == 0xFF && data[1] == 0xD8) return ".jpg";
+        if (data[0] == (byte)'G' && data[1] == (byte)'I' && data[2] == (byte)'F' && data[3] == (byte)'8') return ".gif";
+        if (data[0] == (byte)'B' && data[1] == (byte)'M') return ".bmp";
+        if (data[0] == (byte)'R' && data[1] == (byte)'I' && data[2] == (byte)'F' && data[3] == (byte)'F'
+            && data[8] == (byte)'W' && data[9] == (byte)'E' && data[10] == (byte)'B' && data[11] == (byte)'P') return ".webp";
+        return null;
+    }
+
+    /// <summary>元バイト列をそのまま保存する。破損対策としてデコード可能かだけ先に確認する(#25 と同じ思想)。</summary>
+    private static async Task SaveOriginalAsync(byte[] data, string path)
+    {
+        using var memory = new InMemoryRandomAccessStream();
+        await memory.WriteAsync(System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(data));
+        memory.Seek(0);
+        _ = await BitmapDecoder.CreateAsync(memory);
+
+        await File.WriteAllBytesAsync(path, data);
+    }
+
+    private static async Task SaveEncodedAsync(byte[] data, string path, Guid encoderId)
     {
         // 完全性を確認済みのバッファからデコードする(#25)
         using var memory = new InMemoryRandomAccessStream();
@@ -875,7 +921,7 @@ public sealed class ClipboardMonitorService
 
         using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
         using var dest = fileStream.AsRandomAccessStream();
-        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, dest);
+        var encoder = await BitmapEncoder.CreateAsync(encoderId, dest);
         encoder.SetSoftwareBitmap(bitmap);
         await encoder.FlushAsync();
     }

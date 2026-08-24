@@ -41,6 +41,23 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool IsUrlImageEnabled { get; set; } = SettingsService.UrlImageEnabled;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ImageFormatDescription))]
+    public partial int ImageFormatIndex { get; set; } = SettingsService.ImageSaveFormat switch
+    {
+        "Original" => 0,
+        "Jpeg" => 1,
+        _ => 2,
+    };
+
+    /// <summary>保存形式カードの説明。選択と矛盾しないよう選択肢ごとに切り替える。</summary>
+    public string ImageFormatDescription => R.Get(ImageFormatIndex switch
+    {
+        0 => "ImageFormatDescOriginal",
+        1 => "ImageFormatDescJpeg",
+        _ => "ImageFormatDescPng",
+    });
+
+    [ObservableProperty]
     public partial double RetentionDays { get; set; } = SettingsService.RetentionDays;
 
     [ObservableProperty]
@@ -100,6 +117,19 @@ public partial class SettingsViewModel : ObservableObject
     {
         SettingsService.UrlImageEnabled = value;
         _service.Note(R.Get(value ? "LogUrlImageOn" : "LogUrlImageOff"));
+    }
+
+    partial void OnImageFormatIndexChanged(int value)
+    {
+        SettingsService.ImageSaveFormat = value switch { 0 => "Original", 1 => "Jpeg", _ => "Png" };
+        // ComboBoxItem の表示文字列(x:Uid の Content)をそのままログに使う
+        var label = R.Get(value switch
+        {
+            0 => "ImageFormatOriginal/Content",
+            1 => "ImageFormatJpeg/Content",
+            _ => "ImageFormatPng/Content",
+        });
+        _service.Note(R.F("LogImageFormat", label));
     }
 
     partial void OnRetentionDaysChanged(double value)
