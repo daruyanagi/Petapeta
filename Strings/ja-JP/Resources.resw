@@ -84,7 +84,11 @@
 
   <!-- 情報 -->
   <data name="AboutDescription.Text" xml:space="preserve"><value>コピーした画像やテキストを、デスクトップやフォルダーへそのままペタペタ貼り付けられるようにする常駐ツールです。</value></data>
-  <data name="AboutAcknowledgements.Text" xml:space="preserve"><value>謝辞 — 本アプリは次のオープンソースコンポーネントを利用しています</value></data>
+  <data name="CardDeveloper.Header" xml:space="preserve"><value>daruyanagi</value></data>
+  <data name="CardDeveloper.Description" xml:space="preserve"><value>開発者(GitHub プロフィールを開く)</value></data>
+  <data name="AboutAcknowledgementsSection.Text" xml:space="preserve"><value>謝辞</value></data>
+  <data name="CardAcknowledgements.Header" xml:space="preserve"><value>オープンソースコンポーネント</value></data>
+  <data name="CardAcknowledgements.Description" xml:space="preserve"><value>本アプリは次のオープンソースコンポーネントを利用しています</value></data>
   <data name="AboutVersionChannelFmt" xml:space="preserve"><value>バージョン {0}({1})</value></data>
   <data name="AboutChannelZip" xml:space="preserve"><value>ZIP 版</value></data>
   <data name="AboutChannelWinget" xml:space="preserve"><value>winget 版</value></data>

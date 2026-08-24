@@ -22,12 +22,20 @@
                 </StackPanel>
             </StackPanel>
 
-            <TextBlock x:Uid="AboutDescription" TextWrapping="Wrap" Margin="0,8,0,0" />
+            <TextBlock x:Uid="AboutDescription" TextWrapping="Wrap" Margin="0,8,0,8" />
 
-            <HyperlinkButton
-                Content="GitHub - daruyanagi"
-                NavigateUri="https://github.com/daruyanagi"
-                Padding="0,4" />
+            <controls:SettingsCard
+                x:Uid="CardDeveloper"
+                IsClickEnabled="True"
+                Tag="https://github.com/daruyanagi"
+                Click="OnLinkCardClick">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE77B;" />
+                </controls:SettingsCard.HeaderIcon>
+                <controls:SettingsCard.ActionIcon>
+                    <FontIcon Glyph="&#xE8A7;" />
+                </controls:SettingsCard.ActionIcon>
+            </controls:SettingsCard>
 
             <!-- 更新(#12)。MSIX 版はストアに任せるためセクションごと出さない -->
             <StackPanel x:Name="UpdateSection" Spacing="8" Margin="0,16,0,0">
@@ -49,29 +57,56 @@
             </StackPanel>
 
             <TextBlock
-                x:Uid="AboutAcknowledgements"
+                x:Uid="AboutAcknowledgementsSection"
                 Style="{StaticResource BodyStrongTextBlockStyle}"
-                TextWrapping="Wrap"
                 Margin="0,16,0,0" />
-
-            <StackPanel Spacing="2">
-                <HyperlinkButton
-                    Content="H.NotifyIcon (MIT License)"
-                    NavigateUri="https://github.com/HavenDV/H.NotifyIcon"
-                    Padding="0,2" />
-                <HyperlinkButton
-                    Content="CommunityToolkit.Mvvm (MIT License)"
-                    NavigateUri="https://github.com/CommunityToolkit/dotnet"
-                    Padding="0,2" />
-                <HyperlinkButton
-                    Content="Windows Community Toolkit - SettingsControls (MIT License)"
-                    NavigateUri="https://github.com/CommunityToolkit/Windows"
-                    Padding="0,2" />
-                <HyperlinkButton
-                    Content="Windows App SDK (MIT License)"
-                    NavigateUri="https://github.com/microsoft/WindowsAppSDK"
-                    Padding="0,2" />
-            </StackPanel>
+            <controls:SettingsExpander x:Uid="CardAcknowledgements">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon Glyph="&#xEB51;" />
+                </controls:SettingsExpander.HeaderIcon>
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard
+                        Header="H.NotifyIcon"
+                        Description="MIT License"
+                        IsClickEnabled="True"
+                        Tag="https://github.com/HavenDV/H.NotifyIcon"
+                        Click="OnLinkCardClick">
+                        <controls:SettingsCard.ActionIcon>
+                            <FontIcon Glyph="&#xE8A7;" />
+                        </controls:SettingsCard.ActionIcon>
+                    </controls:SettingsCard>
+                    <controls:SettingsCard
+                        Header="CommunityToolkit.Mvvm"
+                        Description="MIT License"
+                        IsClickEnabled="True"
+                        Tag="https://github.com/CommunityToolkit/dotnet"
+                        Click="OnLinkCardClick">
+                        <controls:SettingsCard.ActionIcon>
+                            <FontIcon Glyph="&#xE8A7;" />
+                        </controls:SettingsCard.ActionIcon>
+                    </controls:SettingsCard>
+                    <controls:SettingsCard
+                        Header="Windows Community Toolkit - SettingsControls"
+                        Description="MIT License"
+                        IsClickEnabled="True"
+                        Tag="https://github.com/CommunityToolkit/Windows"
+                        Click="OnLinkCardClick">
+                        <controls:SettingsCard.ActionIcon>
+                            <FontIcon Glyph="&#xE8A7;" />
+                        </controls:SettingsCard.ActionIcon>
+                    </controls:SettingsCard>
+                    <controls:SettingsCard
+                        Header="Windows App SDK"
+                        Description="MIT License"
+                        IsClickEnabled="True"
+                        Tag="https://github.com/microsoft/WindowsAppSDK"
+                        Click="OnLinkCardClick">
+                        <controls:SettingsCard.ActionIcon>
+                            <FontIcon Glyph="&#xE8A7;" />
+                        </controls:SettingsCard.ActionIcon>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
 
         </StackPanel>
     </ScrollViewer>

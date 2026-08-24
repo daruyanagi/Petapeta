@@ -117,6 +117,15 @@ public sealed partial class AboutPage : Page
     private void OpenReleasePage() =>
         _ = Windows.System.Launcher.LaunchUriAsync(new Uri(UpdateService.ReleasesPageUrl));
 
+    /// <summary>リンクカード共通: Tag の URL を既定ブラウザーで開く。</summary>
+    private void OnLinkCardClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string url })
+        {
+            _ = Windows.System.Launcher.LaunchUriAsync(new Uri(url));
+        }
+    }
+
     private async void OnCheckClick(object sender, RoutedEventArgs e)
     {
         CheckButton.IsEnabled = false;
