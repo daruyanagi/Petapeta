@@ -131,6 +131,12 @@
                 </controls:SettingsCard.HeaderIcon>
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsStartMinimizedEnabled, Mode=TwoWay}" />
             </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="CardUpdateCheck" Visibility="{x:Bind ViewModel.UpdateCheckVisible}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE895;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsUpdateCheckEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
             <controls:SettingsExpander x:Uid="CardLogToFile">
                 <controls:SettingsExpander.HeaderIcon>
                     <FontIcon Glyph="&#xE9F9;" />

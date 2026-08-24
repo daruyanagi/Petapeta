@@ -23,6 +23,9 @@ public static class SettingsService
         public string SoundEvent { get; set; } = "Notification.Default";
         public bool LogToFile { get; set; } = true;
         public bool UrlImageEnabled { get; set; } = true;
+        public bool UpdateCheckEnabled { get; set; } = true;
+        public string? CachedLatestVersion { get; set; }
+        public DateTimeOffset? LastUpdateCheck { get; set; }
     }
 
     private static readonly object Gate = new();
@@ -99,6 +102,27 @@ public static class SettingsService
     {
         get => Values.UrlImageEnabled;
         set { Values.UrlImageEnabled = value; Save(); }
+    }
+
+    /// <summary>更新を自動確認するか(#12)。</summary>
+    public static bool UpdateCheckEnabled
+    {
+        get => Values.UpdateCheckEnabled;
+        set { Values.UpdateCheckEnabled = value; Save(); }
+    }
+
+    /// <summary>前回の確認で見つけた最新版のタグ(例 "v1.0.5")。更新が無ければ null。</summary>
+    public static string? CachedLatestVersion
+    {
+        get => Values.CachedLatestVersion;
+        set { Values.CachedLatestVersion = value; Save(); }
+    }
+
+    /// <summary>最後に更新を確認できた日時。一度も確認できていなければ null。</summary>
+    public static DateTimeOffset? LastUpdateCheck
+    {
+        get => Values.LastUpdateCheck;
+        set { Values.LastUpdateCheck = value; Save(); }
     }
 
     private static Model Load()

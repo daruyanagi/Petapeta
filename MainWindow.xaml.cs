@@ -61,7 +61,29 @@ public sealed partial class MainWindow : Window
         // ここで一元的に両方のUIへ反映する
         App.Monitor.EnabledChanged += OnMonitorEnabledChanged;
 
+        // 更新があるとき[情報]ナビ項目にバッジを出す(#12)
+        Services.UpdateService.AvailabilityChanged += OnUpdateAvailabilityChanged;
+        UpdateAboutBadge();
+
         RootFrame.Navigate(typeof(LogPage));
+    }
+
+    private void OnUpdateAvailabilityChanged() => _dispatcherQueue.TryEnqueue(UpdateAboutBadge);
+
+    private void UpdateAboutBadge() =>
+        AboutUpdateBadge.Visibility = Services.UpdateService.AvailableTag is null
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
+    /// <summary>更新の適用のためにアプリを終了する(#12)。トレイの[終了]と同じ後始末を通す。</summary>
+    public void ExitForUpdate()
+    {
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            _exitRequested = true;
+            TrayIcon.Dispose();
+            Application.Current.Exit();
+        });
     }
 
     private void OnMonitorEnabledChanged(bool enabled)

@@ -75,6 +75,13 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsStartupEnabled { get; set; }
 
+    /// <summary>MSIX(Store)版は更新をストアに任せるため、確認トグル自体を出さない。</summary>
+    public Microsoft.UI.Xaml.Visibility UpdateCheckVisible =>
+        PackageContext.IsPackaged ? Microsoft.UI.Xaml.Visibility.Collapsed : Microsoft.UI.Xaml.Visibility.Visible;
+
+    [ObservableProperty]
+    public partial bool IsUpdateCheckEnabled { get; set; } = SettingsService.UpdateCheckEnabled;
+
     partial void OnIsImageEnabledChanged(bool value)
     {
         SettingsService.ImageEnabled = value;
@@ -161,6 +168,12 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnIsLogToFileEnabledChanged(bool value)
     {
         SettingsService.LogToFile = value;
+    }
+
+    partial void OnIsUpdateCheckEnabledChanged(bool value)
+    {
+        SettingsService.UpdateCheckEnabled = value;
+        _service.Note(R.Get(value ? "LogUpdateCheckOn" : "LogUpdateCheckOff"));
     }
 
     [RelayCommand]

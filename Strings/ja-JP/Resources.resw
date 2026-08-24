@@ -85,7 +85,34 @@
   <!-- 情報 -->
   <data name="AboutDescription.Text" xml:space="preserve"><value>コピーした画像やテキストを、デスクトップやフォルダーへそのままペタペタ貼り付けられるようにする常駐ツールです。</value></data>
   <data name="AboutAcknowledgements.Text" xml:space="preserve"><value>謝辞 — 本アプリは次のオープンソースコンポーネントを利用しています</value></data>
-  <data name="AboutVersionFmt" xml:space="preserve"><value>バージョン {0}</value></data>
+  <data name="AboutVersionChannelFmt" xml:space="preserve"><value>バージョン {0}({1})</value></data>
+  <data name="AboutChannelZip" xml:space="preserve"><value>ZIP 版</value></data>
+  <data name="AboutChannelWinget" xml:space="preserve"><value>winget 版</value></data>
+  <data name="AboutChannelPackaged" xml:space="preserve"><value>パッケージ版(Store)</value></data>
+
+  <!-- 更新(#12) -->
+  <data name="AboutUpdateSection.Text" xml:space="preserve"><value>更新</value></data>
+  <data name="CardUpdateNow.Header" xml:space="preserve"><value>更新の確認</value></data>
+  <data name="UpdateCheckNowButton.Content" xml:space="preserve"><value>今すぐ確認</value></data>
+  <data name="UpdateLastCheckedFmt" xml:space="preserve"><value>最終確認: {0}</value></data>
+  <data name="UpdateNotChecked" xml:space="preserve"><value>まだ確認していません</value></data>
+  <data name="UpdateChecking" xml:space="preserve"><value>確認しています…</value></data>
+  <data name="UpdateLatest" xml:space="preserve"><value>最新の状態です</value></data>
+  <data name="UpdateErrorText" xml:space="preserve"><value>更新を確認できませんでした</value></data>
+  <data name="UpdateAvailableFmt" xml:space="preserve"><value>{0} が利用可能です</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>更新をダウンロードしています…</value></data>
+  <data name="UpdateRestartAndUpdate" xml:space="preserve"><value>再起動して更新</value></data>
+  <data name="UpdateViaWinget" xml:space="preserve"><value>終了して winget で更新</value></data>
+  <data name="UpdateOpenReleasePage" xml:space="preserve"><value>リリースページを開く</value></data>
+  <data name="UpdateCancelButton" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="UpdateConfirmButton" xml:space="preserve"><value>実行</value></data>
+  <data name="UpdateSelfUpdateUnavailableFmt" xml:space="preserve"><value>{0} はアプリ内から更新できません。リリースページから入手してください</value></data>
+  <data name="UpdateWingetConfirmTitle" xml:space="preserve"><value>winget で更新します</value></data>
+  <data name="UpdateWingetConfirmBody" xml:space="preserve"><value>アプリを終了して winget upgrade を実行します(進捗はコンソールウィンドウに表示されます)。更新後の再起動は自動では行われません。</value></data>
+  <data name="UpdateRestartConfirmTitle" xml:space="preserve"><value>再起動して更新します</value></data>
+  <data name="UpdateRestartConfirmBody" xml:space="preserve"><value>更新をダウンロードして検証した後、アプリを再起動して差し替えます。クリップボード監視はその間だけ止まります。</value></data>
+  <data name="CardUpdateCheck.Header" xml:space="preserve"><value>更新を自動確認する</value></data>
+  <data name="CardUpdateCheck.Description" xml:space="preserve"><value>1 日 1 回、新しいバージョンが公開されていないか確認します(ダウンロードや適用は自動では行いません)</value></data>
 
   <!-- ログメッセージ -->
   <data name="LogMonitoringStarted" xml:space="preserve"><value>クリップボード監視を開始しました</value></data>
@@ -119,4 +146,7 @@
   <data name="LogStartupDenied" xml:space="preserve"><value>自動起動を有効にできませんでした。設定 &gt; アプリ &gt; スタートアップから許可してください</value></data>
   <data name="LogStartupQueryFailed" xml:space="preserve"><value>自動起動設定の取得に失敗: {0}</value></data>
   <data name="LogStartupChangeFailed" xml:space="preserve"><value>自動起動設定の変更に失敗: {0}</value></data>
+  <data name="LogUpdateAvailable" xml:space="preserve"><value>更新があります: {0}([情報]ページから適用できます)</value></data>
+  <data name="LogUpdateCheckOn" xml:space="preserve"><value>更新の自動確認: オン</value></data>
+  <data name="LogUpdateCheckOff" xml:space="preserve"><value>更新の自動確認: オフ</value></data>
 </root>
