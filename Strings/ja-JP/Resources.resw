@@ -40,7 +40,9 @@
   <data name="CardImage.Header" xml:space="preserve"><value>画像をファイル化</value></data>
   <data name="CardImage.Description" xml:space="preserve"><value>コピーされた画像をファイルとして保存し、フォルダーへ貼り付けられるようにします</value></data>
   <data name="CardImageFormat.Header" xml:space="preserve"><value>保存形式</value></data>
-  <data name="CardImageFormat.Description" xml:space="preserve"><value>「そのまま」はコピー元の形式(JPEG や GIF など)を保ちます。判別できない形式は PNG になります</value></data>
+  <data name="ImageFormatDescOriginal" xml:space="preserve"><value>コピー元の形式(JPEG や GIF など)をそのまま保ちます。判別できない形式は PNG になります</value></data>
+  <data name="ImageFormatDescJpeg" xml:space="preserve"><value>常に JPEG に変換して保存します(透過は失われます)</value></data>
+  <data name="ImageFormatDescPng" xml:space="preserve"><value>常に PNG に変換して保存します</value></data>
   <data name="ImageFormatOriginal.Content" xml:space="preserve"><value>そのまま</value></data>
   <data name="ImageFormatJpeg.Content" xml:space="preserve"><value>JPEG</value></data>
   <data name="ImageFormatPng.Content" xml:space="preserve"><value>PNG</value></data>

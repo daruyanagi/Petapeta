@@ -41,12 +41,21 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool IsUrlImageEnabled { get; set; } = SettingsService.UrlImageEnabled;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ImageFormatDescription))]
     public partial int ImageFormatIndex { get; set; } = SettingsService.ImageSaveFormat switch
     {
         "Original" => 0,
         "Jpeg" => 1,
         _ => 2,
     };
+
+    /// <summary>保存形式カードの説明。選択と矛盾しないよう選択肢ごとに切り替える。</summary>
+    public string ImageFormatDescription => R.Get(ImageFormatIndex switch
+    {
+        0 => "ImageFormatDescOriginal",
+        1 => "ImageFormatDescJpeg",
+        _ => "ImageFormatDescPng",
+    });
 
     [ObservableProperty]
     public partial double RetentionDays { get; set; } = SettingsService.RetentionDays;

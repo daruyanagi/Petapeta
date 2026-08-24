@@ -40,7 +40,9 @@
   <data name="CardImage.Header" xml:space="preserve"><value>Turn images into files</value></data>
   <data name="CardImage.Description" xml:space="preserve"><value>Saves copied images as files so you can paste them into any folder</value></data>
   <data name="CardImageFormat.Header" xml:space="preserve"><value>Save format</value></data>
-  <data name="CardImageFormat.Description" xml:space="preserve"><value>"Original" keeps the source format (JPEG, GIF, etc.). Formats that cannot be identified fall back to PNG</value></data>
+  <data name="ImageFormatDescOriginal" xml:space="preserve"><value>Keeps the source format (JPEG, GIF, etc.). Formats that cannot be identified fall back to PNG</value></data>
+  <data name="ImageFormatDescJpeg" xml:space="preserve"><value>Always converts to JPEG (transparency is lost)</value></data>
+  <data name="ImageFormatDescPng" xml:space="preserve"><value>Always converts to PNG</value></data>
   <data name="ImageFormatOriginal.Content" xml:space="preserve"><value>Original</value></data>
   <data name="ImageFormatJpeg.Content" xml:space="preserve"><value>JPEG</value></data>
   <data name="ImageFormatPng.Content" xml:space="preserve"><value>PNG</value></data>

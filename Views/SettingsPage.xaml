@@ -26,7 +26,10 @@
                 </controls:SettingsExpander.HeaderIcon>
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsImageEnabled, Mode=TwoWay}" />
                 <controls:SettingsExpander.Items>
-                    <controls:SettingsCard x:Uid="CardImageFormat" IsEnabled="{x:Bind ViewModel.IsImageEnabled, Mode=OneWay}">
+                    <controls:SettingsCard
+                        x:Uid="CardImageFormat"
+                        Description="{x:Bind ViewModel.ImageFormatDescription, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsImageEnabled, Mode=OneWay}">
                         <ComboBox SelectedIndex="{x:Bind ViewModel.ImageFormatIndex, Mode=TwoWay}" MinWidth="140">
                             <ComboBoxItem x:Uid="ImageFormatOriginal" />
                             <ComboBoxItem x:Uid="ImageFormatJpeg" />
