@@ -23,6 +23,7 @@ public static class SettingsService
         public string SoundEvent { get; set; } = "Notification.Default";
         public bool LogToFile { get; set; } = true;
         public bool UrlImageEnabled { get; set; } = true;
+        public string ImageSaveFormat { get; set; } = "Png";
         public bool UpdateCheckEnabled { get; set; } = true;
         public string? CachedLatestVersion { get; set; }
         public DateTimeOffset? LastUpdateCheck { get; set; }
@@ -102,6 +103,13 @@ public static class SettingsService
     {
         get => Values.UrlImageEnabled;
         set { Values.UrlImageEnabled = value; Save(); }
+    }
+
+    /// <summary>クリップボード画像の保存形式。"Original"(そのまま)/ "Jpeg" / "Png"(#41)。</summary>
+    public static string ImageSaveFormat
+    {
+        get => Values.ImageSaveFormat;
+        set { Values.ImageSaveFormat = value; Save(); }
     }
 
     /// <summary>更新を自動確認するか(#12)。</summary>

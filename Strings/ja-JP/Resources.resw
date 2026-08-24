@@ -38,7 +38,12 @@
   <data name="OpenStagingButton.Content" xml:space="preserve"><value>開く</value></data>
   <data name="SettingsSectionTargets.Text" xml:space="preserve"><value>対象</value></data>
   <data name="CardImage.Header" xml:space="preserve"><value>画像をファイル化</value></data>
-  <data name="CardImage.Description" xml:space="preserve"><value>コピーされた画像を PNG として保存し、フォルダーへ貼り付けられるようにします</value></data>
+  <data name="CardImage.Description" xml:space="preserve"><value>コピーされた画像をファイルとして保存し、フォルダーへ貼り付けられるようにします</value></data>
+  <data name="CardImageFormat.Header" xml:space="preserve"><value>保存形式</value></data>
+  <data name="CardImageFormat.Description" xml:space="preserve"><value>「そのまま」はコピー元の形式(JPEG や GIF など)を保ちます。判別できない形式は PNG になります</value></data>
+  <data name="ImageFormatOriginal.Content" xml:space="preserve"><value>そのまま</value></data>
+  <data name="ImageFormatJpeg.Content" xml:space="preserve"><value>JPEG</value></data>
+  <data name="ImageFormatPng.Content" xml:space="preserve"><value>PNG</value></data>
   <data name="CardText.Header" xml:space="preserve"><value>テキストをファイル化</value></data>
   <data name="CardText.Description" xml:space="preserve"><value>エクスプローラーが前面の間だけ .txt として貼り付け可能にします。他のアプリへは通常どおりテキストで貼り付きます</value></data>
   <data name="CardUrlImage.Header" xml:space="preserve"><value>画像 URL をダウンロードしてファイル化</value></data>
@@ -141,6 +146,7 @@
   <data name="LogCleanupDeleted" xml:space="preserve"><value>古いファイルを {0} 件削除しました</value></data>
   <data name="LogCleanupFailed" xml:space="preserve"><value>クリーンアップ失敗: {0}</value></data>
   <data name="LogError" xml:space="preserve"><value>エラー: {0}</value></data>
+  <data name="LogImageFormat" xml:space="preserve"><value>画像の保存形式: {0}</value></data>
   <data name="LogImageOn" xml:space="preserve"><value>画像のファイル化: オン</value></data>
   <data name="LogImageOff" xml:space="preserve"><value>画像のファイル化: オフ</value></data>
   <data name="LogTextOn" xml:space="preserve"><value>テキストのファイル化: オン</value></data>
