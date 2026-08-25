@@ -139,6 +139,9 @@
   <data name="LogTextPending" xml:space="preserve"><value>Text held pending (turns into a file when switching to File Explorer)</value></data>
   <data name="LogTextPendingFrom" xml:space="preserve"><value>Text held pending (source: {0})</value></data>
   <data name="LogIgnoredFormats" xml:space="preserve"><value>Skipped, no supported formats: {0}</value></data>
+  <data name="LogImageUrlPending" xml:space="preserve"><value>Image link held pending (fetches the image when switching to File Explorer)</value></data>
+  <data name="LogImageUrlPendingFrom" xml:space="preserve"><value>Image link held pending (source: {0})</value></data>
+  <data name="LogImageUrlFetchFailed" xml:space="preserve"><value>Skipped: could not fetch the image from its link</value></data>
   <data name="LogStaleClipboardSkip" xml:space="preserve"><value>Write-back cancelled (clipboard was updated during processing)</value></data>
   <data name="LogImageReadUnstable" xml:space="preserve"><value>Skipped: clipboard image data did not stabilize</value></data>
   <data name="LogUrlImageOn" xml:space="preserve"><value>Image URL download: on</value></data>
