@@ -68,6 +68,12 @@ public sealed class ClipboardMonitorService
     private uint _pendingSequence;
     private bool _textAugmented;
 
+    /// <summary>
+    /// 保留中の内容が「画像リンクだけのコピー」(#43)か。true のとき、
+    /// ダウンロードに失敗しても .txt へはフォールバックしない。
+    /// </summary>
+    private bool _pendingImageOnly;
+
     public void Start()
     {
         if (_started)
@@ -230,6 +236,36 @@ public sealed class ClipboardMonitorService
 
         if (!hasText)
         {
+            if (!rawBitmap && !rawText)
+            {
+                // Chromium は SVG などの「画像をコピー」でビットマップを載せず、
+                // HTML(<img src>)と URL 形式だけを置く。画像 URL を取り出して
+                // テキストと同じ保留経路に乗せ、前面切り替え時に取得する(#43)
+                var imageUrl = await TryExtractImageUrlAsync(view);
+                if (imageUrl is not null)
+                {
+                    _pendingText = imageUrl;
+                    _pendingHtml = null;
+                    _pendingRtf = null;
+                    _pendingFilePath = null;
+                    _pendingSourceApp = sourceApp;
+                    _pendingSequence = sequence;
+                    _textAugmented = false;
+                    _pendingImageOnly = true;
+                    try { _pendingHtml = await view.GetHtmlFormatAsync(); } catch { }
+
+                    Emit(sourceApp is null
+                        ? R.Get("LogImageUrlPending")
+                        : R.F("LogImageUrlPendingFrom", sourceApp));
+
+                    if (ForegroundWatcher.IsExplorerForeground())
+                    {
+                        await AugmentTextAsync();
+                    }
+                    return;
+                }
+            }
+
             ClearPendingText();
             // 形式的に対象外だったときだけ記録する(設定オフでのスルーは無ログ)。
             // 「イベント未着」と「形式判定でスルー」を事後に切り分けるため(#9)
@@ -258,6 +294,7 @@ public sealed class ClipboardMonitorService
         _pendingSourceApp = sourceApp;
         _pendingSequence = sequence;
         _textAugmented = false;
+        _pendingImageOnly = false;
 
         if (view.Contains(StandardDataFormats.Html))
         {
@@ -374,10 +411,19 @@ public sealed class ClipboardMonitorService
 
         if (_pendingFilePath is null)
         {
-            // テキストが画像 URL なら画像として取得(#7)。だめなら .txt へ
-            var path = await TryDownloadImageUrlAsync(_pendingText);
+            // テキストが画像 URL なら画像として取得(#7)。だめなら .txt へ。
+            // SVG の保存は「画像をコピー」由来(#43)のときだけ許可する
+            var path = await TryDownloadImageUrlAsync(_pendingText, allowSvg: _pendingImageOnly);
             if (path is null)
             {
+                if (_pendingImageOnly)
+                {
+                    // 画像リンクしか無いコピーで取得に失敗したとき、URL の
+                    // .txt を作っても意図と違うので何もしない(#43)
+                    Emit(R.Get("LogImageUrlFetchFailed"));
+                    ClearPendingText();
+                    return;
+                }
                 path = CreateUniqueStagingPath(".txt");
                 await File.WriteAllTextAsync(path, _pendingText);
             }
@@ -463,6 +509,7 @@ public sealed class ClipboardMonitorService
         _pendingSourceApp = null;
         _pendingSequence = 0;
         _textAugmented = false;
+        _pendingImageOnly = false;
     }
 
     private static string FormatFileAdded(string fileName, string? sourceApp) =>
@@ -607,7 +654,115 @@ public sealed class ClipboardMonitorService
     /// パスを返す(#7)。URL でない・画像でない・失敗時は null(.txt へフォールバック)。
     /// 拡張子ではなく Content-Type で判定する。
     /// </summary>
-    private async Task<string?> TryDownloadImageUrlAsync(string text)
+    /// <summary>
+    /// Text/Bitmap の無いコピーから画像 URL を取り出す(#43)。
+    /// HTML Format の &lt;img src&gt; を優先し(相対 URL は CF_HTML の SourceURL で解決)、
+    /// 無ければ UniformResourceLocatorW を使う。見つからなければ null。
+    /// </summary>
+    private static async Task<string?> TryExtractImageUrlAsync(DataPackageView view)
+    {
+        if (!SettingsService.UrlImageEnabled)
+        {
+            return null;
+        }
+
+        if (view.Contains(StandardDataFormats.Html))
+        {
+            try
+            {
+                var url = ExtractImageUrlFromHtml(await view.GetHtmlFormatAsync());
+                if (url is not null)
+                {
+                    return url;
+                }
+            }
+            catch
+            {
+                // HTML が読めなければ URL 形式のフォールバックへ
+            }
+        }
+
+        const string UrlFormat = "UniformResourceLocatorW";
+        if (view.Contains(UrlFormat))
+        {
+            try
+            {
+                var data = await view.GetDataAsync(UrlFormat);
+                var url = data switch
+                {
+                    string s => s,
+                    IRandomAccessStream stream => await ReadUtf16StringAsync(stream),
+                    _ => null,
+                };
+                url = url?.Trim('\0', ' ', '\r', '\n');
+                if (!string.IsNullOrEmpty(url)
+                    && url.Length <= 2048
+                    && Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                    && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                {
+                    return uri.AbsoluteUri;
+                }
+            }
+            catch
+            {
+                // 読めない形式は諦める(従来どおり「対象外」扱いに落ちる)
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>CF_HTML 文字列から最初の &lt;img src&gt; を絶対 http(s) URL として取り出す。</summary>
+    private static string? ExtractImageUrlFromHtml(string cfHtml)
+    {
+        // CF_HTML ヘッダーの SourceURL(コピー元ページ)を相対 URL の解決に使う
+        Uri? baseUri = null;
+        var source = System.Text.RegularExpressions.Regex.Match(
+            cfHtml, @"^SourceURL:(\S+)", System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (source.Success)
+        {
+            Uri.TryCreate(source.Groups[1].Value, UriKind.Absolute, out baseUri);
+        }
+
+        var img = System.Text.RegularExpressions.Regex.Match(
+            cfHtml, @"<img\b[^>]*?\bsrc\s*=\s*(?:""([^""]+)""|'([^']+)'|([^\s>]+))",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (!img.Success)
+        {
+            return null;
+        }
+
+        var src = System.Net.WebUtility.HtmlDecode(
+            img.Groups[1].Success ? img.Groups[1].Value
+            : img.Groups[2].Success ? img.Groups[2].Value
+            : img.Groups[3].Value);
+
+        if (!Uri.TryCreate(src, UriKind.Absolute, out var uri)
+            && (baseUri is null || !Uri.TryCreate(baseUri, src, out uri)))
+        {
+            return null;
+        }
+
+        return (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            && uri.AbsoluteUri.Length <= 2048
+            ? uri.AbsoluteUri
+            : null;
+    }
+
+    /// <summary>UniformResourceLocatorW ストリーム(UTF-16、NUL 終端)を文字列に読む。</summary>
+    private static async Task<string> ReadUtf16StringAsync(IRandomAccessStream stream)
+    {
+        using var reader = new DataReader(stream.GetInputStreamAt(0));
+        var size = (uint)Math.Min(stream.Size, 4096);
+        await reader.LoadAsync(size);
+        var bytes = new byte[reader.UnconsumedBufferLength];
+        reader.ReadBytes(bytes);
+        var text = System.Text.Encoding.Unicode.GetString(bytes);
+        var nul = text.IndexOf('\0');
+        return nul >= 0 ? text[..nul] : text;
+    }
+
+    private async Task<string?> TryDownloadImageUrlAsync(string text, bool allowSvg = false)
     {
         if (!SettingsService.UrlImageEnabled)
         {
@@ -638,7 +793,9 @@ public sealed class ClipboardMonitorService
                 return null;
             }
 
-            // SVG はスクリプトを含み得るため対象外(#18)
+            // SVG はスクリプトを含み得るため、テキスト URL 経由では対象外(#18)。
+            // 「画像をコピー」由来(#43)は「名前を付けて画像を保存」と等価な
+            // 明示操作なので、そのときだけ .svg を許可する
             var extension = response.Content.Headers.ContentType?.MediaType switch
             {
                 "image/png" => ".png",
@@ -647,6 +804,7 @@ public sealed class ClipboardMonitorService
                 "image/webp" => ".webp",
                 "image/bmp" => ".bmp",
                 "image/avif" => ".avif",
+                "image/svg+xml" when allowSvg => ".svg",
                 _ => null,
             };
             if (extension is null)
