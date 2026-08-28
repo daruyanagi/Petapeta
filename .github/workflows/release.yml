@@ -75,6 +75,9 @@ jobs:
       # 毎回ここで fork を同期しておく。失敗しても公開自体は試みる。
       - name: Sync winget-pkgs fork
         continue-on-error: true
+        # windows ランナーの既定シェル(pwsh)ではバックスラッシュ行継続が
+        # 効かずコマンドが分割されて毎回失敗していた(#48)。bash を明示する
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: |
