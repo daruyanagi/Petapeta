@@ -333,7 +333,7 @@ public sealed class ClipboardMonitorService
         // 保存する(JPEG の再圧縮劣化を避け、GIF ならアニメーションも保てる)。
         // 判別できない形式(DIB など)は従来どおり PNG に再エンコードする
         var format = SettingsService.ImageSaveFormat;
-        var originalExtension = format == "Original" ? SniffImageExtension(data) : null;
+        var originalExtension = format == "Original" ? ImageContent.SniffImageExtension(data) : null;
         var extension = format switch
         {
             "Jpeg" => ".jpg",
@@ -670,7 +670,7 @@ public sealed class ClipboardMonitorService
         {
             try
             {
-                var url = ExtractImageUrlFromHtml(await view.GetHtmlFormatAsync());
+                var url = ImageContent.ExtractImageUrlFromHtml(await view.GetHtmlFormatAsync());
                 if (url is not null)
                 {
                     return url;
@@ -712,43 +712,6 @@ public sealed class ClipboardMonitorService
         return null;
     }
 
-    /// <summary>CF_HTML 文字列から最初の &lt;img src&gt; を絶対 http(s) URL として取り出す。</summary>
-    private static string? ExtractImageUrlFromHtml(string cfHtml)
-    {
-        // CF_HTML ヘッダーの SourceURL(コピー元ページ)を相対 URL の解決に使う
-        Uri? baseUri = null;
-        var source = System.Text.RegularExpressions.Regex.Match(
-            cfHtml, @"^SourceURL:(\S+)", System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (source.Success)
-        {
-            Uri.TryCreate(source.Groups[1].Value, UriKind.Absolute, out baseUri);
-        }
-
-        var img = System.Text.RegularExpressions.Regex.Match(
-            cfHtml, @"<img\b[^>]*?\bsrc\s*=\s*(?:""([^""]+)""|'([^']+)'|([^\s>]+))",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (!img.Success)
-        {
-            return null;
-        }
-
-        var src = System.Net.WebUtility.HtmlDecode(
-            img.Groups[1].Success ? img.Groups[1].Value
-            : img.Groups[2].Success ? img.Groups[2].Value
-            : img.Groups[3].Value);
-
-        if (!Uri.TryCreate(src, UriKind.Absolute, out var uri)
-            && (baseUri is null || !Uri.TryCreate(baseUri, src, out uri)))
-        {
-            return null;
-        }
-
-        return (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
-            && uri.AbsoluteUri.Length <= 2048
-            ? uri.AbsoluteUri
-            : null;
-    }
-
     /// <summary>UniformResourceLocatorW ストリーム(UTF-16、NUL 終端)を文字列に読む。</summary>
     private static async Task<string> ReadUtf16StringAsync(IRandomAccessStream stream)
     {
@@ -769,11 +732,7 @@ public sealed class ClipboardMonitorService
             return null;
         }
 
-        var candidate = text.Trim();
-        if (candidate.Length > 2048
-            || candidate.IndexOfAny(new[] { '\r', '\n', ' ' }) >= 0
-            || !Uri.TryCreate(candidate, UriKind.Absolute, out var uri)
-            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        if (ImageContent.TryParseHttpUrl(text) is not { } uri)
         {
             return null;
         }
@@ -855,24 +814,9 @@ public sealed class ClipboardMonitorService
     /// 存在チェック方式は並走時に同じパスを返し得るため、CreateNew で
     /// 実際に確保できるまで連番を進める(#8)。
     /// </summary>
-    private static string CreateUniqueStagingPath(string extension)
-    {
-        var dir = AppPaths.EnsureStaging();
-        var baseName = $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}";
-        for (var i = 1; ; i++)
-        {
-            var path = Path.Combine(dir, i == 1 ? baseName + extension : $"{baseName} ({i}){extension}");
-            try
-            {
-                using (new FileStream(path, FileMode.CreateNew)) { }
-                return path;
-            }
-            catch (IOException)
-            {
-                // 既に存在 → 次の連番へ
-            }
-        }
-    }
+    private static string CreateUniqueStagingPath(string extension) =>
+        FileNaming.CreateUniquePath(
+            AppPaths.EnsureStaging(), $"Clipboard {DateTime.Now:yyyy-MM-dd HHmmss}", extension);
 
     // Win+V 履歴には元のコピーが既に載っているので、書き換え分は履歴に入れない
     private static ClipboardContentOptions CreateOptions() => new()
@@ -1037,22 +981,6 @@ public sealed class ClipboardMonitorService
         }
         var tail = Math.Min(256, a.Length);
         return a.AsSpan(a.Length - tail).SequenceEqual(b.AsSpan(b.Length - tail));
-    }
-
-    /// <summary>先頭バイトから画像形式を判別する。判別できなければ null(PNG へ再エンコード)。</summary>
-    private static string? SniffImageExtension(byte[] data)
-    {
-        if (data.Length < 12)
-        {
-            return null;
-        }
-        if (data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47) return ".png";
-        if (data[0] == 0xFF && data[1] == 0xD8) return ".jpg";
-        if (data[0] == (byte)'G' && data[1] == (byte)'I' && data[2] == (byte)'F' && data[3] == (byte)'8') return ".gif";
-        if (data[0] == (byte)'B' && data[1] == (byte)'M') return ".bmp";
-        if (data[0] == (byte)'R' && data[1] == (byte)'I' && data[2] == (byte)'F' && data[3] == (byte)'F'
-            && data[8] == (byte)'W' && data[9] == (byte)'E' && data[10] == (byte)'B' && data[11] == (byte)'P') return ".webp";
-        return null;
     }
 
     /// <summary>元バイト列をそのまま保存する。破損対策としてデコード可能かだけ先に確認する(#25 と同じ思想)。</summary>
