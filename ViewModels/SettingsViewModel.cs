@@ -9,13 +9,26 @@ namespace Petapeta.ViewModels;
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ClipboardMonitorService _service = App.Monitor;
+    private readonly Microsoft.UI.Dispatching.DispatcherQueue? _dispatcherQueue;
     private bool _suppressStartupChange;
 
     public SettingsViewModel()
     {
         StagingPath = AppPaths.StagingPath;
         _ = LoadStartupStateAsync();
+
+        // ページ表示中にツールバー/トレイで監視が切り替わっても
+        // [対象]カードの有効/無効を追従させる(#19)。トレイ操作は
+        // 別スレッドから飛んでくるため UI スレッドへ渡す
+        _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        _service.EnabledChanged += OnMonitorEnabledChanged;
     }
+
+    /// <summary>ページ破棄時に呼ぶ。サービス側の購読を解除する(#19)。</summary>
+    public void Detach() => _service.EnabledChanged -= OnMonitorEnabledChanged;
+
+    private void OnMonitorEnabledChanged(bool _) =>
+        _dispatcherQueue?.TryEnqueue(() => OnPropertyChanged(nameof(IsMonitoringEnabled)));
 
     /// <summary>マスター(監視)がオフのとき、対象トグルは操作不可にする。</summary>
     public bool IsMonitoringEnabled => _service.IsEnabled;
@@ -237,15 +250,20 @@ public partial class SettingsViewModel : ObservableObject
 
     private Task LoadStartupStateAsync()
     {
+        // 取得が失敗しても抑止フラグを必ず戻す。戻し忘れると以降の
+        // ユーザー操作がすべて無視される(#20)
+        _suppressStartupChange = true;
         try
         {
-            _suppressStartupChange = true;
             IsStartupEnabled = StartupRegistration.IsEnabled();
-            _suppressStartupChange = false;
         }
         catch (Exception ex)
         {
             _service.Note(R.F("LogStartupQueryFailed", ex.Message));
+        }
+        finally
+        {
+            _suppressStartupChange = false;
         }
         return Task.CompletedTask;
     }
@@ -261,6 +279,17 @@ public partial class SettingsViewModel : ObservableObject
         catch (Exception ex)
         {
             _service.Note(R.F("LogStartupChangeFailed", ex.Message));
+
+            // 実状態は変わっていないので、トグル表示を元へ戻す(#20)
+            _suppressStartupChange = true;
+            try
+            {
+                IsStartupEnabled = !enable;
+            }
+            finally
+            {
+                _suppressStartupChange = false;
+            }
         }
         return Task.CompletedTask;
     }

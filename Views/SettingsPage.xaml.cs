@@ -11,5 +11,9 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         InitializeComponent();
+
+        // ページはナビゲーションごとに作り直されるため、破棄時に
+        // サービス側イベントの購読を解除する(#19)
+        Unloaded += (_, _) => ViewModel.Detach();
     }
 }
