@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    サービス層のユニットテスト(#23)。
+    本体は WinUI 3 アプリのためプロジェクト参照ができない。XTimelineViewer と
+    同じく、UI 非依存のソースファイルをリンクして素の .NET でテストする。
+    WinUI に依存するメンバー(UpdateService.Trace など)は Stubs.cs で差し替える。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Petapeta.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\PackageContext.cs" Link="Linked\PackageContext.cs" />
+    <Compile Include="..\Services\FileNaming.cs" Link="Linked\FileNaming.cs" />
+    <Compile Include="..\Services\ImageContent.cs" Link="Linked\ImageContent.cs" />
+    <Compile Include="..\Services\UpdateSwap.cs" Link="Linked\UpdateSwap.cs" />
+    <Compile Include="..\Services\ZipUpdateRunner.cs" Link="Linked\ZipUpdateRunner.cs" />
+    <Compile Include="..\Services\ZipUpdater.cs" Link="Linked\ZipUpdater.cs" />
+  </ItemGroup>
+</Project>
