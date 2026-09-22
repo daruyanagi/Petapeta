@@ -903,6 +903,10 @@ public sealed class ClipboardMonitorService
     /// (=コピー元の書き込みが完了している)ことを確認して返す(#25)。
     /// 不安定・読み取り失敗時は待ってから新しいビューで取り直す。
     /// </summary>
+    // 安定性確認の 2 回の読み取りの間隔。コピー元の書き込みが止まって見える
+    // 一瞬を避けるために必ず置く(#50)。画像コピー 1 回あたりの遅延はこの分だけ
+    private const int StableReadGapMs = 150;
+
     private async Task<byte[]?> ReadStableBitmapBytesAsync(DataPackageView view)
     {
         // サイズ上限の事前チェック(従来のログを維持)
@@ -934,16 +938,21 @@ public sealed class ClipboardMonitorService
                 // WINCODEC_ERR_UNEXPECTEDSIZE (0x88982F72) 等 → 取り直しへ
             }
 
-            if (current is not null && previous is not null && BuffersLookEqual(previous, current))
+            // 全バイト一致で安定とみなす。末尾だけの比較では、確保済み DIB の
+            // 中段を埋めている途中(長さも末尾も同じ)をすり抜けていた(#50)
+            if (current is not null && previous is not null && ImageContent.BuffersEqual(previous, current))
             {
-                return current;  // 2回連続で一致 → 安定(通常は待ちなしの2回で確定)
+                return current;
             }
             previous = current;
+
+            // 読み取りの間に必ず間隔を置く。連続 2 回では、コピー元が行を埋める
+            // 合間の同じ途中状態を 2 回掴んで「安定」と誤認し得る(#50)
+            await Task.Delay(StableReadGapMs);
 
             if (attempt >= 1)
             {
                 // 不安定 → コピー元の書き込み完了を待って新しいビューで取り直す
-                await Task.Delay(200);
                 var fresh = await GetContentWithRetryAsync();
                 if (fresh is null || fresh.Contains(MarkerFormat)
                     || !fresh.Contains(StandardDataFormats.Bitmap))
@@ -971,16 +980,6 @@ public sealed class ClipboardMonitorService
         using var memory = new MemoryStream((int)source.Size);
         await stream.CopyToAsync(memory);
         return memory.ToArray();
-    }
-
-    private static bool BuffersLookEqual(byte[] a, byte[] b)
-    {
-        if (a.Length != b.Length)
-        {
-            return false;
-        }
-        var tail = Math.Min(256, a.Length);
-        return a.AsSpan(a.Length - tail).SequenceEqual(b.AsSpan(b.Length - tail));
     }
 
     /// <summary>元バイト列をそのまま保存する。破損対策としてデコード可能かだけ先に確認する(#25 と同じ思想)。</summary>

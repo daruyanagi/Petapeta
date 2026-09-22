@@ -62,6 +62,13 @@ internal static class ImageContent
     }
 
     /// <summary>
+    /// 2 回の読み取り結果が完全一致するか(#25/#50)。
+    /// 末尾だけの比較では、確保済みバッファの中段を埋めている途中を見逃す。
+    /// </summary>
+    internal static bool BuffersEqual(byte[] a, byte[] b) =>
+        a.Length == b.Length && a.AsSpan().SequenceEqual(b);
+
+    /// <summary>
     /// 単一行・2048 文字以内の絶対 http(s) URL なら Uri を返す(#7/#18 の判定部)。
     /// それ以外(改行・空白入り、相対、他スキーム)は null。
     /// </summary>
