@@ -105,6 +105,30 @@ public class ImageContentTests
     public void Html_NoImg_IsNull() =>
         Assert.Null(ImageContent.ExtractImageUrlFromHtml("<html><p>text only</p></html>"));
 
+    // ── BuffersEqual(#50)─────────────────────────────────────────────
+
+    [Fact]
+    public void Buffers_Identical_AreEqual()
+    {
+        var a = Enumerable.Range(0, 100_000).Select(i => (byte)i).ToArray();
+        Assert.True(ImageContent.BuffersEqual(a, (byte[])a.Clone()));
+    }
+
+    [Fact]
+    public void Buffers_DifferOnlyInMiddle_AreNotEqual()
+    {
+        // 長さも末尾 256 バイトも同じで中段だけ違う = 書き込み途中の DIB。
+        // 末尾比較(旧実装)ではこれを「安定」と誤認していた
+        var a = Enumerable.Range(0, 100_000).Select(i => (byte)i).ToArray();
+        var b = (byte[])a.Clone();
+        b[50_000] ^= 0xFF;
+        Assert.False(ImageContent.BuffersEqual(a, b));
+    }
+
+    [Fact]
+    public void Buffers_DifferentLength_AreNotEqual() =>
+        Assert.False(ImageContent.BuffersEqual(new byte[10], new byte[11]));
+
     // ── TryParseHttpUrl ─────────────────────────────────────────────────
 
     [Theory]
