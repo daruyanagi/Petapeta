@@ -24,6 +24,7 @@ public static class SettingsService
         public bool LogToFile { get; set; } = true;
         public bool UrlImageEnabled { get; set; } = true;
         public string ImageSaveFormat { get; set; } = "Png";
+        public bool IgnoreRemoteClipboard { get; set; } = true;
         public bool UpdateCheckEnabled { get; set; } = true;
         public string? CachedLatestVersion { get; set; }
         public DateTimeOffset? LastUpdateCheck { get; set; }
@@ -110,6 +111,13 @@ public static class SettingsService
     {
         get => Values.ImageSaveFormat;
         set { Values.ImageSaveFormat = value; Save(); }
+    }
+
+    /// <summary>RDP セッション内で、クライアント側から届いたコピー(rdpclip 経由)を処理しないか(#53)。</summary>
+    public static bool IgnoreRemoteClipboard
+    {
+        get => Values.IgnoreRemoteClipboard;
+        set { Values.IgnoreRemoteClipboard = value; Save(); }
     }
 
     /// <summary>更新を自動確認するか(#12)。</summary>

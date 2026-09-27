@@ -227,6 +227,14 @@ public sealed class ClipboardMonitorService
         // コピー元の特定は自分で再セットする前に行う(再セット後は所有者が自分になる)
         var sourceApp = GetClipboardOwnerProcessName();
 
+        // RDP セッション内でクライアント側から届いたコピーは処理しない(#53)
+        if (RemoteSession.ShouldIgnore(RemoteSession.IsRemoteSession, SettingsService.IgnoreRemoteClipboard, sourceApp))
+        {
+            ClearPendingText();
+            Emit(R.F("LogRemoteClipboardSkip", sourceApp ?? "-"));
+            return;
+        }
+
         if (hasBitmap)
         {
             ClearPendingText();

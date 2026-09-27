@@ -23,6 +23,7 @@
     <Compile Include="..\PackageContext.cs" Link="Linked\PackageContext.cs" />
     <Compile Include="..\Services\FileNaming.cs" Link="Linked\FileNaming.cs" />
     <Compile Include="..\Services\ImageContent.cs" Link="Linked\ImageContent.cs" />
+    <Compile Include="..\Services\RemoteSession.cs" Link="Linked\RemoteSession.cs" />
     <Compile Include="..\Services\UpdateSwap.cs" Link="Linked\UpdateSwap.cs" />
     <Compile Include="..\Services\ZipUpdateRunner.cs" Link="Linked\ZipUpdateRunner.cs" />
     <Compile Include="..\Services\ZipUpdater.cs" Link="Linked\ZipUpdater.cs" />
