@@ -47,6 +47,15 @@
                 </controls:SettingsCard.HeaderIcon>
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsTextEnabled, Mode=TwoWay}" />
             </controls:SettingsCard>
+            <controls:SettingsCard
+                x:Uid="CardIgnoreRemote"
+                Visibility="{x:Bind ViewModel.RemoteSessionVisible}"
+                IsEnabled="{x:Bind ViewModel.IsMonitoringEnabled, Mode=OneWay}">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon Glyph="&#xE7F4;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch IsOn="{x:Bind ViewModel.IsIgnoreRemoteClipboardEnabled, Mode=TwoWay}" />
+            </controls:SettingsCard>
 
             <TextBlock x:Uid="SettingsSectionCleanup" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
             <controls:SettingsCard x:Uid="CardRetentionDays">

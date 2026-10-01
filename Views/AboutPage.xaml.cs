@@ -33,6 +33,12 @@ public sealed partial class AboutPage : Page
             InstallChannel.Packaged => "AboutChannelPackaged",
             _ => "AboutChannelZip",
         });
+        if (RemoteSession.IsRemoteSession)
+        {
+            // RDP セッション内であることは #53 の挙動(クライアント側からの
+            // コピーを処理しない)に直結するので、チャネルと並べて示す
+            channel = R.F("AboutChannelWithRemoteFmt", channel, R.Get("AboutRemoteSession"));
+        }
         VersionText = R.F("AboutVersionChannelFmt", $"{v.Major}.{v.Minor}.{v.Build}", channel);
 
         InitializeComponent();

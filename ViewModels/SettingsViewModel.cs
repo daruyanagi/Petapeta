@@ -71,6 +71,13 @@ public partial class SettingsViewModel : ObservableObject
     });
 
     [ObservableProperty]
+    public partial bool IsIgnoreRemoteClipboardEnabled { get; set; } = SettingsService.IgnoreRemoteClipboard;
+
+    /// <summary>RDP セッション内でのみ意味を持つ設定なので、それ以外では出さない(#53)。</summary>
+    public Microsoft.UI.Xaml.Visibility RemoteSessionVisible =>
+        RemoteSession.IsRemoteSession ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+
+    [ObservableProperty]
     public partial double RetentionDays { get; set; } = SettingsService.RetentionDays;
 
     [ObservableProperty]
@@ -130,6 +137,12 @@ public partial class SettingsViewModel : ObservableObject
     {
         SettingsService.UrlImageEnabled = value;
         _service.Note(R.Get(value ? "LogUrlImageOn" : "LogUrlImageOff"));
+    }
+
+    partial void OnIsIgnoreRemoteClipboardEnabledChanged(bool value)
+    {
+        SettingsService.IgnoreRemoteClipboard = value;
+        _service.Note(R.Get(value ? "LogIgnoreRemoteOn" : "LogIgnoreRemoteOff"));
     }
 
     partial void OnImageFormatIndexChanged(int value)

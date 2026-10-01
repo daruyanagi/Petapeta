@@ -100,6 +100,10 @@
   <data name="AboutChannelZip" xml:space="preserve"><value>ZIP</value></data>
   <data name="AboutChannelWinget" xml:space="preserve"><value>winget</value></data>
   <data name="AboutChannelPackaged" xml:space="preserve"><value>Packaged (Store)</value></data>
+  <data name="AboutChannelWithRemoteFmt" xml:space="preserve"><value>{0}, {1}</value></data>
+  <data name="AboutRemoteSession" xml:space="preserve"><value>remote session</value></data>
+  <data name="CardIgnoreRemote.Header" xml:space="preserve"><value>Ignore copies coming through Remote Desktop</value></data>
+  <data name="CardIgnoreRemote.Description" xml:space="preserve"><value>Content copied on the connecting PC (via rdpclip) is not turned into files. It is usually pasted back on that PC, where files created here would not be reachable</value></data>
 
   <!-- Updates (#12) -->
   <data name="AboutUpdateSection.Text" xml:space="preserve"><value>Updates</value></data>
@@ -152,6 +156,9 @@
   <data name="LogCleanupFailed" xml:space="preserve"><value>Cleanup failed: {0}</value></data>
   <data name="LogError" xml:space="preserve"><value>Error: {0}</value></data>
   <data name="LogImageFormat" xml:space="preserve"><value>Image save format: {0}</value></data>
+  <data name="LogRemoteClipboardSkip" xml:space="preserve"><value>Skipped: copy came through Remote Desktop (source: {0})</value></data>
+  <data name="LogIgnoreRemoteOn" xml:space="preserve"><value>Ignore Remote Desktop copies: on</value></data>
+  <data name="LogIgnoreRemoteOff" xml:space="preserve"><value>Ignore Remote Desktop copies: off</value></data>
   <data name="LogImageOn" xml:space="preserve"><value>Image to file: on</value></data>
   <data name="LogImageOff" xml:space="preserve"><value>Image to file: off</value></data>
   <data name="LogTextOn" xml:space="preserve"><value>Text to file: on</value></data>
