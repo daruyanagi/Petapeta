@@ -50,6 +50,8 @@
                             <ComboBoxItem Content="4K (3840px)" />
                             <ComboBoxItem Content="WQHD (2560px)" />
                             <ComboBoxItem Content="Full HD (1920px)" />
+                            <ComboBoxItem Content="HD (1280px)" />
+                            <ComboBoxItem Content="800px" />
                         </ComboBox>
                     </controls:SettingsCard>
                     <controls:SettingsCard x:Uid="CardUrlImage">
@@ -176,6 +178,8 @@
                             <ComboBoxItem Content="4K (3840px)" />
                             <ComboBoxItem Content="WQHD (2560px)" />
                             <ComboBoxItem Content="Full HD (1920px)" />
+                            <ComboBoxItem Content="HD (1280px)" />
+                            <ComboBoxItem Content="800px" />
                         </ComboBox>
                     </controls:SettingsCard>
                 </controls:SettingsExpander.Items>
