@@ -77,6 +77,16 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool IsToastEnabled { get; set; } = SettingsService.ToastEnabled;
 
     [ObservableProperty]
+    public partial int ToastResizeIndex { get; set; } = SettingsService.ToastResizeEdge switch
+    {
+        3840 => 0,
+        2560 => 1,
+        1280 => 3,
+        800 => 4,
+        _ => 2,
+    };
+
+    [ObservableProperty]
     public partial double MaxImageMegabytes { get; set; } = SettingsService.MaxImageMegabytes;
 
     [ObservableProperty]
@@ -85,6 +95,8 @@ public partial class SettingsViewModel : ObservableObject
         3840 => 1,
         2560 => 2,
         1920 => 3,
+        1280 => 4,
+        800 => 5,
         _ => 0,
     };
 
@@ -159,6 +171,12 @@ public partial class SettingsViewModel : ObservableObject
         SettingsService.ToastEnabled = value;
     }
 
+    partial void OnToastResizeIndexChanged(int value)
+    {
+        SettingsService.ToastResizeEdge = value switch { 0 => 3840, 1 => 2560, 3 => 1280, 4 => 800, _ => 1920 };
+        _service.Note(R.F("LogToastResize", SettingsService.ToastResizeEdge));
+    }
+
     partial void OnMaxImageMegabytesChanged(double value)
     {
         if (!double.IsNaN(value) && value >= 1)
@@ -170,7 +188,7 @@ public partial class SettingsViewModel : ObservableObject
 
     partial void OnImageMaxEdgeIndexChanged(int value)
     {
-        SettingsService.ImageMaxEdge = value switch { 1 => 3840, 2 => 2560, 3 => 1920, _ => 0 };
+        SettingsService.ImageMaxEdge = value switch { 1 => 3840, 2 => 2560, 3 => 1920, 4 => 1280, 5 => 800, _ => 0 };
         var label = SettingsService.ImageMaxEdge == 0
             ? R.Get("ImageMaxEdgeNone/Content")
             : $"{SettingsService.ImageMaxEdge}px";

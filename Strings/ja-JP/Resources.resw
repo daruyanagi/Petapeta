@@ -53,6 +53,9 @@
   <data name="ImageMaxEdgeNone.Content" xml:space="preserve"><value>縮小しない</value></data>
   <data name="CardToast.Header" xml:space="preserve"><value>スキップしたときに通知する</value></data>
   <data name="CardToast.Description" xml:space="preserve"><value>画像が大きすぎる・読み取れないなどでファイル化を見送ったとき、トースト通知で知らせます</value></data>
+  <data name="CardToastResize.Header" xml:space="preserve"><value>通知からリサイズするときのサイズ</value></data>
+  <data name="CardToastResize.Description" xml:space="preserve"><value>「画像が大きすぎる」通知の[リサイズしてコピーする]で、長辺をこのサイズに縮小します</value></data>
+  <data name="ToastResizeButton" xml:space="preserve"><value>リサイズしてコピーする</value></data>
   <data name="CardText.Header" xml:space="preserve"><value>テキストをファイル化</value></data>
   <data name="CardText.Description" xml:space="preserve"><value>エクスプローラーが前面の間だけ .txt として貼り付け可能にします。他のアプリへは通常どおりテキストで貼り付きます</value></data>
   <data name="CardUrlImage.Header" xml:space="preserve"><value>画像 URL をダウンロードしてファイル化</value></data>
@@ -165,6 +168,9 @@
   <data name="LogImageFormat" xml:space="preserve"><value>画像の保存形式: {0}</value></data>
   <data name="LogImageMaxEdge" xml:space="preserve"><value>大きな画像の縮小: {0}</value></data>
   <data name="LogImageMaxBytes" xml:space="preserve"><value>読み取る画像の上限: {0} MB</value></data>
+  <data name="LogToastResize" xml:space="preserve"><value>通知からリサイズするときのサイズ: {0}px</value></data>
+  <data name="LogResizeFromToast" xml:space="preserve"><value>通知からリサイズしてコピーします(長辺 {0}px)</value></data>
+  <data name="LogResizeSourceGone" xml:space="preserve"><value>元の画像がクリップボードにないためリサイズできません</value></data>
   <data name="LogImageScaled" xml:space="preserve"><value>画像を縮小しました: {0}×{1} → {2}×{3}</value></data>
   <data name="LogRemoteClipboardSkip" xml:space="preserve"><value>リモートデスクトップ経由のコピーのためスキップ(コピー元: {0})</value></data>
   <data name="LogIgnoreRemoteOn" xml:space="preserve"><value>リモートデスクトップ経由のコピーを処理しない: オン</value></data>

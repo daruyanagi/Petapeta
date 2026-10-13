@@ -104,6 +104,14 @@ public partial class App : Application
         Monitor.Start();
         Foreground.ExplorerForegroundChanged += Monitor.OnExplorerForegroundChanged;
         Foreground.Start();
+        // 通知のボタンは別スレッドから届く。Clipboard は UI スレッド限定なので渡し直す(#59)
+        NotificationService.ActionInvoked += action =>
+        {
+            if (action == NotificationService.ResizeAction)
+            {
+                DispatcherQueue.TryEnqueue(() => _ = Monitor.ResizeFromNotificationAsync());
+            }
+        };
         NotificationService.Initialize();
 
         if (!PackageContext.IsPackaged)

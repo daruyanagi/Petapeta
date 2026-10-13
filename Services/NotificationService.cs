@@ -11,13 +11,23 @@ namespace Petapeta.Services;
 /// </summary>
 internal static class NotificationService
 {
+    /// <summary>通知のボタンが押されたときの引数「action」の値: 見送った画像をリサイズしてコピー(#59)。</summary>
+    public const string ResizeAction = "resize";
+
+    private const string ActionKey = "action";
+
     private static bool _registered;
+
+    /// <summary>通知のボタンが押された(引数「action」の値)。UI スレッドとは限らない。</summary>
+    public static event Action<string>? ActionInvoked;
 
     /// <summary>起動時に一度呼ぶ。登録できなくてもアプリの動作は止めない。</summary>
     public static void Initialize()
     {
         try
         {
+            // ハンドラーの購読は Register より前に行う必要がある
+            AppNotificationManager.Default.NotificationInvoked += OnNotificationInvoked;
             AppNotificationManager.Default.Register();
             _registered = true;
         }
@@ -27,8 +37,24 @@ internal static class NotificationService
         }
     }
 
+    private static void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
+    {
+        if (args.Arguments.TryGetValue(ActionKey, out var action) && !string.IsNullOrEmpty(action))
+        {
+            ActionInvoked?.Invoke(action);
+        }
+    }
+
     /// <summary>設定でオンのときだけ通知を出す。失敗しても本処理に影響させない。</summary>
-    public static void Show(string body)
+    public static void Show(string body) => Present(new AppNotificationBuilder().AddText(body));
+
+    /// <summary>ボタン付きの通知。押されると <see cref="ActionInvoked"/> に action が届く。</summary>
+    public static void ShowWithAction(string body, string buttonText, string action) =>
+        Present(new AppNotificationBuilder()
+            .AddText(body)
+            .AddButton(new AppNotificationButton(buttonText).AddArgument(ActionKey, action)));
+
+    private static void Present(AppNotificationBuilder builder)
     {
         if (!_registered || !SettingsService.ToastEnabled)
         {
@@ -37,11 +63,8 @@ internal static class NotificationService
 
         try
         {
-            var notification = new AppNotificationBuilder()
-                .AddText("Petapeta")
-                .AddText(body)
-                .BuildNotification();
-            AppNotificationManager.Default.Show(notification);
+            // タイトルはシステムがアプリ名を出すので本文だけにする
+            AppNotificationManager.Default.Show(builder.BuildNotification());
         }
         catch (Exception ex)
         {
