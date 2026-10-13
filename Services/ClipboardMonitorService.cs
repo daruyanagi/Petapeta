@@ -24,9 +24,9 @@ public sealed class ClipboardMonitorService
     private const string MarkerFormat = "Petapeta.Processed";
     private const int MaxRetries = 5;
     private const int RetryDelayMs = 100;
-    // 縮小オプション(#57)があるので、5K〜8K の生データ(60〜130 MB)も読む。
-    // ここを超えるものだけスキップして通知する
-    private const ulong MaxImageBytes = 256 * 1024 * 1024;
+    // 読み取る画像の生データの上限。既定 50 MB、設定で変更できる(#57)。
+    // 5K は約 60 MB、8K は約 130 MB 必要
+    private static ulong MaxImageBytes => (ulong)SettingsService.MaxImageMegabytes * 1024 * 1024;
     private const int MaxTextChars = 10 * 1024 * 1024;
 
     private bool _isEnabled = true;
@@ -795,7 +795,7 @@ public sealed class ClipboardMonitorService
                 return null;
             }
 
-            if (response.Content.Headers.ContentLength is > (long)MaxImageBytes)
+            if (response.Content.Headers.ContentLength > (long)MaxImageBytes)
             {
                 return null;
             }

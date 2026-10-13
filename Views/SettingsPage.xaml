@@ -36,6 +36,14 @@
                             <ComboBoxItem x:Uid="ImageFormatPng" />
                         </ComboBox>
                     </controls:SettingsCard>
+                    <controls:SettingsCard x:Uid="CardImageMaxBytes" IsEnabled="{x:Bind ViewModel.IsImageEnabled, Mode=OneWay}">
+                        <NumberBox
+                            Value="{x:Bind ViewModel.MaxImageMegabytes, Mode=TwoWay}"
+                            Minimum="10"
+                            Maximum="1024"
+                            SmallChange="10"
+                            SpinButtonPlacementMode="Inline" />
+                    </controls:SettingsCard>
                     <controls:SettingsCard x:Uid="CardImageMaxEdge" IsEnabled="{x:Bind ViewModel.IsImageEnabled, Mode=OneWay}">
                         <ComboBox SelectedIndex="{x:Bind ViewModel.ImageMaxEdgeIndex, Mode=TwoWay}" MinWidth="160">
                             <ComboBoxItem x:Uid="ImageMaxEdgeNone" />

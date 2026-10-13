@@ -77,6 +77,9 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool IsToastEnabled { get; set; } = SettingsService.ToastEnabled;
 
     [ObservableProperty]
+    public partial double MaxImageMegabytes { get; set; } = SettingsService.MaxImageMegabytes;
+
+    [ObservableProperty]
     public partial int ImageMaxEdgeIndex { get; set; } = SettingsService.ImageMaxEdge switch
     {
         3840 => 1,
@@ -154,6 +157,15 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnIsToastEnabledChanged(bool value)
     {
         SettingsService.ToastEnabled = value;
+    }
+
+    partial void OnMaxImageMegabytesChanged(double value)
+    {
+        if (!double.IsNaN(value) && value >= 1)
+        {
+            SettingsService.MaxImageMegabytes = (int)value;
+            _service.Note(R.F("LogImageMaxBytes", (int)value));
+        }
     }
 
     partial void OnImageMaxEdgeIndexChanged(int value)

@@ -27,6 +27,7 @@ public static class SettingsService
         public bool IgnoreRemoteClipboard { get; set; } = true;
         public bool ToastEnabled { get; set; } = true;
         public int ImageMaxEdge { get; set; }
+        public int MaxImageMegabytes { get; set; } = 50;
         public bool UpdateCheckEnabled { get; set; } = true;
         public string? CachedLatestVersion { get; set; }
         public DateTimeOffset? LastUpdateCheck { get; set; }
@@ -134,6 +135,13 @@ public static class SettingsService
     {
         get => Values.ImageMaxEdge;
         set { Values.ImageMaxEdge = value; Save(); }
+    }
+
+    /// <summary>読み取る画像の生データの上限(MB)。超える画像はファイル化しない(#57)。</summary>
+    public static int MaxImageMegabytes
+    {
+        get => Values.MaxImageMegabytes;
+        set { Values.MaxImageMegabytes = value; Save(); }
     }
 
     /// <summary>更新を自動確認するか(#12)。</summary>
