@@ -240,7 +240,7 @@ public sealed class ClipboardMonitorService
         if (hasBitmap)
         {
             ClearPendingText();
-            await AugmentImageAsync(view, sourceApp, sequence);
+            await AugmentImageAsync(view, sourceApp, sequence, MaxImageBytes, (uint)SettingsService.ImageMaxEdge);
             return;
         }
 
@@ -328,12 +328,13 @@ public sealed class ClipboardMonitorService
     }
 
     /// <summary>画像を PNG として書き出し、CF_HDROP を追加して再セットする。</summary>
-    private async Task AugmentImageAsync(DataPackageView view, string? sourceApp, uint sequence)
+    private async Task AugmentImageAsync(
+        DataPackageView view, string? sourceApp, uint sequence, ulong byteLimit, uint maxEdge)
     {
         // コピー元の書き込みが未完のストリームを読むと、行単位のゴミや
         // WINCODEC_ERR_UNEXPECTEDSIZE (0x88982F72) になる。全量をバッファに
         // 読み、二重読みで安定を確認してからデコードする(#25)
-        var data = await ReadStableBitmapBytesAsync(view);
+        var data = await ReadStableBitmapBytesAsync(view, byteLimit);
         if (data is null)
         {
             return;
@@ -347,7 +348,7 @@ public sealed class ClipboardMonitorService
         var decoder = await BitmapDecoder.CreateAsync(memory);
 
         // 大きな画像の縮小(#57)。長辺が設定を超えるときだけ縦横比を保って縮小する
-        var scaled = ImageContent.FitWithin(decoder.PixelWidth, decoder.PixelHeight, (uint)SettingsService.ImageMaxEdge);
+        var scaled = ImageContent.FitWithin(decoder.PixelWidth, decoder.PixelHeight, maxEdge);
 
         // 保存形式(#41)。「そのまま」はコピー元の形式を判別して元バイト列を
         // 保存する(JPEG の再圧縮劣化を避け、GIF ならアニメーションも保てる)。
@@ -931,16 +932,47 @@ public sealed class ClipboardMonitorService
     // 一瞬を避けるために必ず置く(#50)。画像コピー 1 回あたりの遅延はこの分だけ
     private const int StableReadGapMs = 150;
 
-    private async Task<byte[]?> ReadStableBitmapBytesAsync(DataPackageView view)
+    // 通知の[リサイズしてコピーする]で上限を無視して読むときの、それでも超えない天井
+    private const ulong HardImageByteCap = 1024UL * 1024 * 1024;
+
+    // 上限超過で見送った画像のクリップボード世代。通知のボタンから戻ってきたとき、
+    // まだ同じ内容かを確かめるために使う(#59)
+    private uint _oversizedSequence;
+
+    /// <summary>
+    /// 通知の[リサイズしてコピーする]から呼ばれる(#59)。見送った画像がまだ
+    /// クリップボードにあれば、上限を無視して読み、設定のサイズへ縮小してファイル化する。
+    /// </summary>
+    public Task ResizeFromNotificationAsync() => RunSafeAsync(async () =>
+    {
+        var view = await GetContentWithRetryAsync();
+        if (view is null
+            || !view.Contains(StandardDataFormats.Bitmap)
+            || GetClipboardSequenceNumber() != _oversizedSequence)
+        {
+            EmitAndNotify(R.Get("LogResizeSourceGone"));
+            return;
+        }
+
+        var maxEdge = (uint)SettingsService.ToastResizeEdge;
+        Emit(R.F("LogResizeFromToast", maxEdge));
+        await AugmentImageAsync(view, GetClipboardOwnerProcessName(), _oversizedSequence, HardImageByteCap, maxEdge);
+    });
+
+    private async Task<byte[]?> ReadStableBitmapBytesAsync(DataPackageView view, ulong byteLimit)
     {
         // サイズ上限の事前チェック(従来のログを維持)
         try
         {
             var reference = await view.GetBitmapAsync();
             using var probe = await reference.OpenReadAsync();
-            if (probe.Size > MaxImageBytes)
+            if (probe.Size > byteLimit)
             {
-                EmitAndNotify(R.F("LogImageTooLarge", probe.Size / 1024 / 1024));
+                // 見送るが、通知の[リサイズしてコピーする]でやり直せるようにする(#59)
+                var message = R.F("LogImageTooLarge", probe.Size / 1024 / 1024);
+                Emit(message);
+                _oversizedSequence = GetClipboardSequenceNumber();
+                NotificationService.ShowWithAction(message, R.Get("ToastResizeButton"), NotificationService.ResizeAction);
                 return null;
             }
         }
@@ -955,7 +987,7 @@ public sealed class ClipboardMonitorService
             byte[]? current = null;
             try
             {
-                current = await ReadBitmapBytesOnceAsync(view);
+                current = await ReadBitmapBytesOnceAsync(view, byteLimit);
             }
             catch
             {
@@ -991,11 +1023,11 @@ public sealed class ClipboardMonitorService
         return null;
     }
 
-    private static async Task<byte[]?> ReadBitmapBytesOnceAsync(DataPackageView view)
+    private static async Task<byte[]?> ReadBitmapBytesOnceAsync(DataPackageView view, ulong byteLimit)
     {
         var reference = await view.GetBitmapAsync();
         using var source = await reference.OpenReadAsync();
-        if (source.Size == 0 || source.Size > MaxImageBytes)
+        if (source.Size == 0 || source.Size > byteLimit)
         {
             return null;
         }

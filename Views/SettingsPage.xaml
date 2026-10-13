@@ -165,12 +165,21 @@
                 </controls:SettingsCard.HeaderIcon>
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsStartMinimizedEnabled, Mode=TwoWay}" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="CardToast">
-                <controls:SettingsCard.HeaderIcon>
+            <controls:SettingsExpander x:Uid="CardToast">
+                <controls:SettingsExpander.HeaderIcon>
                     <FontIcon Glyph="&#xE7E7;" />
-                </controls:SettingsCard.HeaderIcon>
+                </controls:SettingsExpander.HeaderIcon>
                 <ToggleSwitch IsOn="{x:Bind ViewModel.IsToastEnabled, Mode=TwoWay}" />
-            </controls:SettingsCard>
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard x:Uid="CardToastResize" IsEnabled="{x:Bind ViewModel.IsToastEnabled, Mode=OneWay}">
+                        <ComboBox SelectedIndex="{x:Bind ViewModel.ToastResizeIndex, Mode=TwoWay}" MinWidth="160">
+                            <ComboBoxItem Content="4K (3840px)" />
+                            <ComboBoxItem Content="WQHD (2560px)" />
+                            <ComboBoxItem Content="Full HD (1920px)" />
+                        </ComboBox>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
             <controls:SettingsCard x:Uid="CardUpdateCheck" Visibility="{x:Bind ViewModel.UpdateCheckVisible}">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon Glyph="&#xE895;" />

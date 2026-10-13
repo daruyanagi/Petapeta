@@ -28,6 +28,7 @@ public static class SettingsService
         public bool ToastEnabled { get; set; } = true;
         public int ImageMaxEdge { get; set; }
         public int MaxImageMegabytes { get; set; } = 50;
+        public int ToastResizeEdge { get; set; } = 1920;
         public bool UpdateCheckEnabled { get; set; } = true;
         public string? CachedLatestVersion { get; set; }
         public DateTimeOffset? LastUpdateCheck { get; set; }
@@ -142,6 +143,13 @@ public static class SettingsService
     {
         get => Values.MaxImageMegabytes;
         set { Values.MaxImageMegabytes = value; Save(); }
+    }
+
+    /// <summary>通知の[リサイズしてコピーする]で縮小する長辺(px)(#59)。</summary>
+    public static int ToastResizeEdge
+    {
+        get => Values.ToastResizeEdge;
+        set { Values.ToastResizeEdge = value; Save(); }
     }
 
     /// <summary>更新を自動確認するか(#12)。</summary>
