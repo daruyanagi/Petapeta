@@ -73,6 +73,18 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsIgnoreRemoteClipboardEnabled { get; set; } = SettingsService.IgnoreRemoteClipboard;
 
+    [ObservableProperty]
+    public partial bool IsToastEnabled { get; set; } = SettingsService.ToastEnabled;
+
+    [ObservableProperty]
+    public partial int ImageMaxEdgeIndex { get; set; } = SettingsService.ImageMaxEdge switch
+    {
+        3840 => 1,
+        2560 => 2,
+        1920 => 3,
+        _ => 0,
+    };
+
     /// <summary>RDP セッション内でのみ意味を持つ設定なので、それ以外では出さない(#53)。</summary>
     public Microsoft.UI.Xaml.Visibility RemoteSessionVisible =>
         RemoteSession.IsRemoteSession ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
@@ -137,6 +149,20 @@ public partial class SettingsViewModel : ObservableObject
     {
         SettingsService.UrlImageEnabled = value;
         _service.Note(R.Get(value ? "LogUrlImageOn" : "LogUrlImageOff"));
+    }
+
+    partial void OnIsToastEnabledChanged(bool value)
+    {
+        SettingsService.ToastEnabled = value;
+    }
+
+    partial void OnImageMaxEdgeIndexChanged(int value)
+    {
+        SettingsService.ImageMaxEdge = value switch { 1 => 3840, 2 => 2560, 3 => 1920, _ => 0 };
+        var label = SettingsService.ImageMaxEdge == 0
+            ? R.Get("ImageMaxEdgeNone/Content")
+            : $"{SettingsService.ImageMaxEdge}px";
+        _service.Note(R.F("LogImageMaxEdge", label));
     }
 
     partial void OnIsIgnoreRemoteClipboardEnabledChanged(bool value)

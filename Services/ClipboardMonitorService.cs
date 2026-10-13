@@ -24,7 +24,9 @@ public sealed class ClipboardMonitorService
     private const string MarkerFormat = "Petapeta.Processed";
     private const int MaxRetries = 5;
     private const int RetryDelayMs = 100;
-    private const ulong MaxImageBytes = 50 * 1024 * 1024;
+    // 縮小オプション(#57)があるので、5K〜8K の生データ(60〜130 MB)も読む。
+    // ここを超えるものだけスキップして通知する
+    private const ulong MaxImageBytes = 256 * 1024 * 1024;
     private const int MaxTextChars = 10 * 1024 * 1024;
 
     private bool _isEnabled = true;
@@ -337,28 +339,38 @@ public sealed class ClipboardMonitorService
             return;
         }
 
+        // 完全性を確認済みのバッファからデコーダーを作る(#25)。寸法の確認と
+        // 保存(縮小・再エンコード)で同じデコーダーを使い回す
+        using var memory = new InMemoryRandomAccessStream();
+        await memory.WriteAsync(System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(data));
+        memory.Seek(0);
+        var decoder = await BitmapDecoder.CreateAsync(memory);
+
+        // 大きな画像の縮小(#57)。長辺が設定を超えるときだけ縦横比を保って縮小する
+        var scaled = ImageContent.FitWithin(decoder.PixelWidth, decoder.PixelHeight, (uint)SettingsService.ImageMaxEdge);
+
         // 保存形式(#41)。「そのまま」はコピー元の形式を判別して元バイト列を
         // 保存する(JPEG の再圧縮劣化を避け、GIF ならアニメーションも保てる)。
-        // 判別できない形式(DIB など)は従来どおり PNG に再エンコードする
+        // 判別できない形式(DIB など)は PNG に再エンコードする。縮小が要るときは
+        // 「そのまま」でも再エンコードする(元が JPEG なら JPEG、それ以外は PNG)
         var format = SettingsService.ImageSaveFormat;
         var originalExtension = format == "Original" ? ImageContent.SniffImageExtension(data) : null;
-        var extension = format switch
-        {
-            "Jpeg" => ".jpg",
-            "Original" => originalExtension ?? ".png",
-            _ => ".png",
-        };
+        var keepOriginal = originalExtension is not null && scaled is null;
+        var extension = keepOriginal ? originalExtension!
+            : (format == "Jpeg" || originalExtension == ".jpg") ? ".jpg"
+            : ".png";
+        var encoderId = extension == ".jpg" ? BitmapEncoder.JpegEncoderId : BitmapEncoder.PngEncoderId;
+
         var path = CreateUniqueStagingPath(extension);
         try
         {
-            if (originalExtension is not null)
+            if (keepOriginal)
             {
-                await SaveOriginalAsync(data, path);
+                await File.WriteAllBytesAsync(path, data);
             }
             else
             {
-                await SaveEncodedAsync(data, path,
-                    format == "Jpeg" ? BitmapEncoder.JpegEncoderId : BitmapEncoder.PngEncoderId);
+                await EncodeAsync(decoder, path, encoderId, scaled);
             }
         }
         catch
@@ -368,6 +380,10 @@ public sealed class ClipboardMonitorService
             throw;
         }
         NoteStagingFileCreated();
+        if (scaled is { } size)
+        {
+            Emit(R.F("LogImageScaled", decoder.PixelWidth, decoder.PixelHeight, size.Width, size.Height));
+        }
         var file = await StorageFile.GetFileFromPathAsync(path);
 
         var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
@@ -924,7 +940,7 @@ public sealed class ClipboardMonitorService
             using var probe = await reference.OpenReadAsync();
             if (probe.Size > MaxImageBytes)
             {
-                Emit(R.F("LogImageTooLarge", probe.Size / 1024 / 1024));
+                EmitAndNotify(R.F("LogImageTooLarge", probe.Size / 1024 / 1024));
                 return null;
             }
         }
@@ -971,7 +987,7 @@ public sealed class ClipboardMonitorService
             }
         }
 
-        Emit(R.Get("LogImageReadUnstable"));
+        EmitAndNotify(R.Get("LogImageReadUnstable"));
         return null;
     }
 
@@ -990,33 +1006,34 @@ public sealed class ClipboardMonitorService
         return memory.ToArray();
     }
 
-    /// <summary>元バイト列をそのまま保存する。破損対策としてデコード可能かだけ先に確認する(#25 と同じ思想)。</summary>
-    private static async Task SaveOriginalAsync(byte[] data, string path)
+    /// <summary>デコード済みの画像を(必要なら縮小して)指定の形式で書き出す。</summary>
+    private static async Task EncodeAsync(
+        BitmapDecoder decoder, string path, Guid encoderId, (uint Width, uint Height)? scaled)
     {
-        using var memory = new InMemoryRandomAccessStream();
-        await memory.WriteAsync(System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(data));
-        memory.Seek(0);
-        _ = await BitmapDecoder.CreateAsync(memory);
+        var transform = new BitmapTransform();
+        if (scaled is { } size)
+        {
+            transform.ScaledWidth = size.Width;
+            transform.ScaledHeight = size.Height;
+            transform.InterpolationMode = BitmapInterpolationMode.Fant;
+        }
 
-        await File.WriteAllBytesAsync(path, data);
-    }
-
-    private static async Task SaveEncodedAsync(byte[] data, string path, Guid encoderId)
-    {
-        // 完全性を確認済みのバッファからデコードする(#25)
-        using var memory = new InMemoryRandomAccessStream();
-        await memory.WriteAsync(System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(data));
-        memory.Seek(0);
-
-        var decoder = await BitmapDecoder.CreateAsync(memory);
         using var bitmap = await decoder.GetSoftwareBitmapAsync(
-            BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+            BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, transform,
+            ExifOrientationMode.IgnoreExifOrientation, ColorManagementMode.DoNotColorManage);
 
         using var fileStream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
         using var dest = fileStream.AsRandomAccessStream();
         var encoder = await BitmapEncoder.CreateAsync(encoderId, dest);
         encoder.SetSoftwareBitmap(bitmap);
         await encoder.FlushAsync();
+    }
+
+    /// <summary>ログに残しつつ、スキップした判断はトーストでも知らせる(#56)。</summary>
+    private void EmitAndNotify(string message)
+    {
+        Emit(message);
+        NotificationService.Show(message);
     }
 
     // 注意: Clipboard API は UI(STA)スレッドを要するため ConfigureAwait(false) は
