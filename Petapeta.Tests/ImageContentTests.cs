@@ -105,6 +105,36 @@ public class ImageContentTests
     public void Html_NoImg_IsNull() =>
         Assert.Null(ImageContent.ExtractImageUrlFromHtml("<html><p>text only</p></html>"));
 
+    // ── FitWithin(#57)─────────────────────────────────────────────────
+
+    [Fact]
+    public void Fit_Disabled_ReturnsNull() =>
+        Assert.Null(ImageContent.FitWithin(5120, 2880, 0));
+
+    [Fact]
+    public void Fit_AlreadySmallEnough_ReturnsNull() =>
+        Assert.Null(ImageContent.FitWithin(1920, 1080, 3840));
+
+    [Fact]
+    public void Fit_ExactlyAtLimit_ReturnsNull() =>
+        Assert.Null(ImageContent.FitWithin(3840, 2160, 3840));
+
+    [Fact]
+    public void Fit_Landscape_ScalesByWidth() =>
+        Assert.Equal(((uint)3840, (uint)2160), ImageContent.FitWithin(5120, 2880, 3840));
+
+    [Fact]
+    public void Fit_Portrait_ScalesByHeight() =>
+        Assert.Equal(((uint)1080, (uint)1920), ImageContent.FitWithin(2160, 3840, 1920));
+
+    [Fact]
+    public void Fit_KeepsAspectRatio_WithRounding() =>
+        Assert.Equal(((uint)1920, (uint)1011), ImageContent.FitWithin(2560, 1348, 1920));
+
+    [Fact]
+    public void Fit_ZeroDimension_ReturnsNull() =>
+        Assert.Null(ImageContent.FitWithin(0, 100, 1920));
+
     // ── BuffersEqual(#50)─────────────────────────────────────────────
 
     [Fact]

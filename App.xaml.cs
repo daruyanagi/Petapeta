@@ -104,6 +104,7 @@ public partial class App : Application
         Monitor.Start();
         Foreground.ExplorerForegroundChanged += Monitor.OnExplorerForegroundChanged;
         Foreground.Start();
+        NotificationService.Initialize();
 
         if (!PackageContext.IsPackaged)
         {

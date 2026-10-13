@@ -62,6 +62,25 @@ internal static class ImageContent
     }
 
     /// <summary>
+    /// 長辺が maxEdge を超える画像を、縦横比を保って収めるサイズ(#57)。
+    /// 縮小が不要(maxEdge=0 または既に収まっている)なら null。
+    /// </summary>
+    internal static (uint Width, uint Height)? FitWithin(uint width, uint height, uint maxEdge)
+    {
+        if (maxEdge == 0 || width == 0 || height == 0)
+        {
+            return null;
+        }
+        var longest = Math.Max(width, height);
+        if (longest <= maxEdge)
+        {
+            return null;
+        }
+        var scale = (double)maxEdge / longest;
+        return (Math.Max(1, (uint)Math.Round(width * scale)), Math.Max(1, (uint)Math.Round(height * scale)));
+    }
+
+    /// <summary>
     /// 2 回の読み取り結果が完全一致するか(#25/#50)。
     /// 末尾だけの比較では、確保済みバッファの中段を埋めている途中を見逃す。
     /// </summary>

@@ -46,6 +46,13 @@
   <data name="ImageFormatOriginal.Content" xml:space="preserve"><value>Original</value></data>
   <data name="ImageFormatJpeg.Content" xml:space="preserve"><value>JPEG</value></data>
   <data name="ImageFormatPng.Content" xml:space="preserve"><value>PNG</value></data>
+  <data name="CardImageMaxBytes.Header" xml:space="preserve"><value>Maximum image size to read (MB)</value></data>
+  <data name="CardImageMaxBytes.Description" xml:space="preserve"><value>Images whose raw data exceeds this size are not turned into files; you only get a notification (5K is about 60 MB, 8K about 130 MB)</value></data>
+  <data name="CardImageMaxEdge.Header" xml:space="preserve"><value>Shrink large images</value></data>
+  <data name="CardImageMaxEdge.Description" xml:space="preserve"><value>Images whose longer side exceeds this size are scaled down (keeping the aspect ratio) before saving</value></data>
+  <data name="ImageMaxEdgeNone.Content" xml:space="preserve"><value>Don't shrink</value></data>
+  <data name="CardToast.Header" xml:space="preserve"><value>Notify when an image is skipped</value></data>
+  <data name="CardToast.Description" xml:space="preserve"><value>Shows a toast notification when an image is not turned into a file (too large, unreadable, etc.)</value></data>
   <data name="CardText.Header" xml:space="preserve"><value>Turn text into files</value></data>
   <data name="CardText.Description" xml:space="preserve"><value>Makes text pastable as a .txt file only while File Explorer is in the foreground. Other apps receive plain text as usual</value></data>
   <data name="CardUrlImage.Header" xml:space="preserve"><value>Download image URLs as files</value></data>
@@ -156,6 +163,9 @@
   <data name="LogCleanupFailed" xml:space="preserve"><value>Cleanup failed: {0}</value></data>
   <data name="LogError" xml:space="preserve"><value>Error: {0}</value></data>
   <data name="LogImageFormat" xml:space="preserve"><value>Image save format: {0}</value></data>
+  <data name="LogImageMaxEdge" xml:space="preserve"><value>Shrink large images: {0}</value></data>
+  <data name="LogImageMaxBytes" xml:space="preserve"><value>Maximum image size to read: {0} MB</value></data>
+  <data name="LogImageScaled" xml:space="preserve"><value>Image scaled down: {0}×{1} → {2}×{3}</value></data>
   <data name="LogRemoteClipboardSkip" xml:space="preserve"><value>Skipped: copy came through Remote Desktop (source: {0})</value></data>
   <data name="LogIgnoreRemoteOn" xml:space="preserve"><value>Ignore Remote Desktop copies: on</value></data>
   <data name="LogIgnoreRemoteOff" xml:space="preserve"><value>Ignore Remote Desktop copies: off</value></data>

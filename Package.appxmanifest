@@ -4,9 +4,11 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap desktop6 rescap">
+  IgnorableNamespaces="uap desktop desktop6 com rescap">
 
   <Identity
     Name="D654E410-3490-41E5-9EC3-6C089AED68EC"
@@ -45,6 +47,21 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <!-- パッケージ版でトースト通知(AppNotification)を使うための宣言(#56)。
+           無いと AppNotificationManager.Register が E_FAIL になる -->
+      <Extensions>
+        <desktop:Extension Category="windows.toastNotificationActivation">
+          <desktop:ToastNotificationActivation ToastActivatorCLSID="3B48B778-B7E6-4307-8EE7-271CFA1944FA" />
+        </desktop:Extension>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <!-- $targetnametoken$ はここでは置換されないので実名を書く -->
+            <com:ExeServer Executable="Petapeta.exe" DisplayName="Petapeta" Arguments="----AppNotificationActivated:">
+              <com:Class Id="3B48B778-B7E6-4307-8EE7-271CFA1944FA" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+      </Extensions>
     </Application>
   </Applications>
 

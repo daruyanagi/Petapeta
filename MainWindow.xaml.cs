@@ -82,6 +82,7 @@ public sealed partial class MainWindow : Window
         {
             _exitRequested = true;
             TrayIcon.Dispose();
+            Services.NotificationService.Shutdown();
             Application.Current.Exit();
         });
     }
@@ -197,6 +198,7 @@ public sealed partial class MainWindow : Window
         {
             _exitRequested = true;
             TrayIcon.Dispose();
+            Services.NotificationService.Shutdown();
             Application.Current.Exit();
         });
     }

@@ -46,6 +46,13 @@
   <data name="ImageFormatOriginal.Content" xml:space="preserve"><value>そのまま</value></data>
   <data name="ImageFormatJpeg.Content" xml:space="preserve"><value>JPEG</value></data>
   <data name="ImageFormatPng.Content" xml:space="preserve"><value>PNG</value></data>
+  <data name="CardImageMaxBytes.Header" xml:space="preserve"><value>読み取る画像の上限(MB)</value></data>
+  <data name="CardImageMaxBytes.Description" xml:space="preserve"><value>生データがこのサイズを超える画像はファイル化せず、通知だけ行います(5K で約 60 MB、8K で約 130 MB)</value></data>
+  <data name="CardImageMaxEdge.Header" xml:space="preserve"><value>大きな画像を縮小</value></data>
+  <data name="CardImageMaxEdge.Description" xml:space="preserve"><value>長辺がこのサイズを超える画像は、縦横比を保って縮小してから保存します</value></data>
+  <data name="ImageMaxEdgeNone.Content" xml:space="preserve"><value>縮小しない</value></data>
+  <data name="CardToast.Header" xml:space="preserve"><value>スキップしたときに通知する</value></data>
+  <data name="CardToast.Description" xml:space="preserve"><value>画像が大きすぎる・読み取れないなどでファイル化を見送ったとき、トースト通知で知らせます</value></data>
   <data name="CardText.Header" xml:space="preserve"><value>テキストをファイル化</value></data>
   <data name="CardText.Description" xml:space="preserve"><value>エクスプローラーが前面の間だけ .txt として貼り付け可能にします。他のアプリへは通常どおりテキストで貼り付きます</value></data>
   <data name="CardUrlImage.Header" xml:space="preserve"><value>画像 URL をダウンロードしてファイル化</value></data>
@@ -156,6 +163,9 @@
   <data name="LogCleanupFailed" xml:space="preserve"><value>クリーンアップ失敗: {0}</value></data>
   <data name="LogError" xml:space="preserve"><value>エラー: {0}</value></data>
   <data name="LogImageFormat" xml:space="preserve"><value>画像の保存形式: {0}</value></data>
+  <data name="LogImageMaxEdge" xml:space="preserve"><value>大きな画像の縮小: {0}</value></data>
+  <data name="LogImageMaxBytes" xml:space="preserve"><value>読み取る画像の上限: {0} MB</value></data>
+  <data name="LogImageScaled" xml:space="preserve"><value>画像を縮小しました: {0}×{1} → {2}×{3}</value></data>
   <data name="LogRemoteClipboardSkip" xml:space="preserve"><value>リモートデスクトップ経由のコピーのためスキップ(コピー元: {0})</value></data>
   <data name="LogIgnoreRemoteOn" xml:space="preserve"><value>リモートデスクトップ経由のコピーを処理しない: オン</value></data>
   <data name="LogIgnoreRemoteOff" xml:space="preserve"><value>リモートデスクトップ経由のコピーを処理しない: オフ</value></data>
